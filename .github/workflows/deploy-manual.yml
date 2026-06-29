@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "manual/**"
-      - ".github/workflows/deploy-manual.yml"
   workflow_dispatch:
 
 permissions:
@@ -30,6 +27,8 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload manual artifact
         uses: actions/upload-pages-artifact@v3
