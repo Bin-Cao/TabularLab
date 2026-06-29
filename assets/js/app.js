@@ -1206,6 +1206,7 @@
     $("headerVersion").textContent = `v${TabularLabMeta.version}`;
     $("headerAuthorLink").textContent = TabularLabMeta.authorDisplay;
     $("headerAuthorLink").href = TabularLabMeta.authorUrl;
+    $("headerManualLink").href = TabularLabMeta.manualUrl;
     $("headerIssueLink").href = TabularLabMeta.issueUrl;
     $("operationVersion").textContent = `v${TabularLabMeta.version} | ${TabularLabMeta.released}`;
     $("operationAuthorLink").textContent = TabularLabMeta.authorDisplay;

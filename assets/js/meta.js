@@ -7,6 +7,7 @@
   const authorUrl = "https://bin-cao.github.io/";
   const softwareUrl = "https://github.com/bin-cao/TabularLab";
   const issueUrl = `${softwareUrl}/issues`;
+  const manualUrl = "https://bin-cao.github.io/TabularLab/";
   const citation = `${author}. (${released.slice(0, 4)}). ${title} Version ${version}. ${softwareUrl}`;
   const bibtex = `@software{Cao2026TabularLab,
   author = {${author}},
@@ -26,6 +27,7 @@
     authorUrl,
     softwareUrl,
     issueUrl,
+    manualUrl,
     citation,
     bibtex
   };

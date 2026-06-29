@@ -2,6 +2,7 @@
   const messages = {
     zh: {
       subtitle: "本地表格机器学习分析平台",
+      manualLink: "说明书",
       feedbackPrompt: "If you have any suggestions for improvement, please open an issue on",
       dataSource: "数据源",
       dropFile: "拖入 CSV/TSV/Excel 文件，或点击选择",
@@ -160,6 +161,7 @@
     },
     en: {
       subtitle: "Local machine learning platform for tabular data",
+      manualLink: "Manual",
       feedbackPrompt: "If you have any suggestions for improvement, please open an issue on",
       dataSource: "Data Source",
       dropFile: "Drop CSV/TSV/Excel here, or click to choose",
