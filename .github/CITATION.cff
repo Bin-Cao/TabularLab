@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use TabularLab, please cite it using the metadata below."
+title: "TabularLab : A lightweight toolkit for tabular machine learning."
+version: "1.0.0"
+date-released: "2026-06-29"
+type: software
+authors:
+  - family-names: Cao
+    given-names: Bin
+url: "https://github.com/bin-cao/TabularLab"
+repository-code: "https://github.com/bin-cao/TabularLab"
+abstract: "A lightweight browser-based toolkit for tabular machine learning, visualization, prediction, and local CSV/Excel analysis."
+preferred-citation:
+  type: software
+  title: "TabularLab : A lightweight toolkit for tabular machine learning."
+  authors:
+    - family-names: Cao
+      given-names: Bin
+  year: 2026
+  version: "1.0.0"
+  url: "https://github.com/bin-cao/TabularLab"

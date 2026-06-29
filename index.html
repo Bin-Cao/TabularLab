@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TabularLab</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>TabularLab</h1>
+        <p data-i18n="subtitle">本地表格机器学习分析平台</p>
+        <div class="header-meta">
+          <span id="headerVersion"></span>
+          <a id="headerAuthorLink" target="_blank" rel="noreferrer"></a>
+        </div>
+        <p class="feedback-link">
+          <span data-i18n="feedbackPrompt">If you have any suggestions for improvement, please open an issue on</span>
+          <a id="headerIssueLink" target="_blank" rel="noreferrer">GitHub</a>
+        </p>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="themeToggle" title="Theme">◐</button>
+        <select id="languageSelect" aria-label="Language">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <section class="panel upload-panel">
+          <h2 data-i18n="dataSource">数据源</h2>
+          <label class="dropzone" for="fileInput" id="dropzone">
+            <span data-i18n="dropFile">拖入 CSV/TSV/Excel 文件，或点击选择</span>
+            <small data-i18n="localOnly">数据只在本地浏览器处理</small>
+          </label>
+          <input id="fileInput" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls">
+          <label>
+            <span data-i18n="defaultDataset">默认数据</span>
+            <select id="defaultDatasetSelect"></select>
+          </label>
+          <div id="defaultDatasetInfo" class="dataset-info"></div>
+          <div id="currentDatasetInfo" class="current-dataset"></div>
+          <div class="row">
+            <button id="loadSampleBtn" data-i18n="loadSample">加载示例数据</button>
+            <button id="clearBtn" class="secondary" data-i18n="clear">清空</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 data-i18n="taskSetup">任务设置</h2>
+          <label>
+            <span data-i18n="taskType">任务类型</span>
+            <select id="taskType">
+              <option value="regression" data-i18n="regression">回归</option>
+              <option value="classification" data-i18n="classification">分类</option>
+              <option value="clustering" data-i18n="clustering">聚类</option>
+            </select>
+          </label>
+          <label id="targetWrap">
+            <span data-i18n="targetColumn">目标列</span>
+            <select id="targetColumn" multiple size="4"></select>
+          </label>
+          <label>
+            <span data-i18n="featureColumns">特征列</span>
+            <select id="featureColumns" multiple size="7"></select>
+          </label>
+          <div class="row">
+            <button id="selectAllFeatures" class="secondary" data-i18n="selectAll">全选</button>
+            <button id="clearFeatures" class="secondary" data-i18n="selectNone">全不选</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 data-i18n="columnRoles">字段角色</h2>
+          <p class="muted compact" data-i18n="columnRolesHint">导入数据后，勾选哪些列作为特征，哪些列作为目标。目标支持多选。</p>
+          <div class="role-table-wrap">
+            <table id="columnRoleTable" class="role-table"></table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 data-i18n="processing">处理与训练</h2>
+          <label>
+            <span data-i18n="missingStrategy">缺失值</span>
+            <select id="missingStrategy">
+              <option value="mean_mode" data-i18n="meanMode">数值均值 / 类别众数</option>
+              <option value="median_mode" data-i18n="medianMode">数值中位数 / 类别众数</option>
+              <option value="zero_unknown" data-i18n="zeroUnknown">0 / Unknown</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="categoricalEncoding">文本/符号编码</span>
+            <select id="encodingStrategy">
+              <option value="onehot" data-i18n="oneHot">独热编码</option>
+              <option value="ordinal" data-i18n="ordinal">序号编码</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="model">模型</span>
+            <select id="modelSelect"></select>
+          </label>
+          <div id="modelParams" class="model-params"></div>
+          <div class="grid-2">
+            <label class="split-control">
+              <span data-i18n="testSize">测试集比例</span>
+              <input id="testSize" type="number" min="0.05" max="0.8" step="0.05" value="0.25">
+            </label>
+            <label class="seed-control">
+              <span data-i18n="seed">随机种子</span>
+              <input id="seed" type="number" value="42">
+            </label>
+          </div>
+          <label class="checkbox split-control">
+            <input id="crossValidation" type="checkbox">
+            <span data-i18n="useCv">启用交叉验证</span>
+          </label>
+          <label id="foldWrap" class="split-control">
+            <span data-i18n="folds">折数</span>
+            <input id="folds" type="number" min="2" max="10" value="5">
+          </label>
+          <p id="clusteringModeHint" class="muted compact task-hint" data-i18n="clusteringModeHint"></p>
+          <button id="runBtn" class="primary" data-i18n="runAnalysis">运行分析</button>
+        </section>
+
+        <section class="panel citation-panel">
+          <h2 data-i18n="versionCitation">版本与引用</h2>
+          <div class="mini-meta">
+            <span id="operationVersion"></span>
+            <a id="operationAuthorLink" target="_blank" rel="noreferrer"></a>
+          </div>
+          <label>
+            <span data-i18n="citation">软件引用</span>
+            <textarea id="operationCitationText" readonly rows="5"></textarea>
+          </label>
+          <label>
+            <span data-i18n="bibtex">BibTeX</span>
+            <textarea id="operationBibtexText" readonly rows="8"></textarea>
+          </label>
+          <div class="row">
+            <button id="copyOperationCitationBtn" class="secondary" data-i18n="copyCitation">复制引用</button>
+            <button id="copyOperationBibtexBtn" class="secondary" data-i18n="copyBibtex">复制 BibTeX</button>
+          </div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <nav class="tabs" aria-label="Views">
+          <button class="tab active" data-tab="overview" data-i18n="overview">概览</button>
+          <button class="tab" data-tab="visuals" data-i18n="visuals">可视化</button>
+          <button class="tab" data-tab="results" data-i18n="results">结果</button>
+          <button class="tab" data-tab="predict" data-i18n="predict">预测</button>
+          <button class="tab" data-tab="data" data-i18n="dataTable">数据表</button>
+          <button class="tab" data-tab="about" data-i18n="about">关于</button>
+        </nav>
+
+        <section id="overview" class="tab-panel active">
+          <div class="metrics" id="datasetMetrics"></div>
+          <div class="panel wide">
+            <h2 data-i18n="columnSummary">字段摘要</h2>
+            <div class="table-wrap">
+              <table id="summaryTable"></table>
+            </div>
+          </div>
+        </section>
+
+        <section id="visuals" class="tab-panel">
+          <div class="visual-toolbar">
+            <label>
+              <span data-i18n="chartType">图表类型</span>
+              <select id="chartType">
+                <option value="histogram" data-i18n="histogram">直方图</option>
+                <option value="scatter" data-i18n="scatter">散点图</option>
+                <option value="correlation" data-i18n="correlation">相关性热力图</option>
+                <option value="target" data-i18n="targetPlot">目标关系图</option>
+              </select>
+            </label>
+            <label>
+              <span>X</span>
+              <select id="xColumn"></select>
+            </label>
+            <label>
+              <span>Y</span>
+              <select id="yColumn"></select>
+            </label>
+            <button id="drawChartBtn" data-i18n="draw">绘制</button>
+            <button id="saveChartBtn" class="secondary" data-i18n="saveChart">保存图表</button>
+          </div>
+          <div class="chart-shell">
+            <canvas id="chartCanvas" width="1200" height="720"></canvas>
+          </div>
+        </section>
+
+        <section id="results" class="tab-panel">
+          <div id="evaluationNotice" class="evaluation-notice"></div>
+          <div class="metrics" id="modelMetrics"></div>
+          <div class="panel wide">
+            <div class="panel-head">
+              <h2 data-i18n="modelOutput">模型输出</h2>
+              <div class="row tight">
+                <button id="saveResultsBtn" class="secondary" data-i18n="saveResults">保存结果</button>
+                <button id="savePredictionsBtn" class="secondary" data-i18n="savePredictions">保存预测</button>
+              </div>
+            </div>
+            <pre id="resultLog" class="log"></pre>
+          </div>
+          <div class="panel wide">
+            <div class="panel-head">
+              <h2 data-i18n="resultAnalysis">结果分析图</h2>
+              <div class="row tight">
+                <select id="resultTargetSelect" aria-label="Result target"></select>
+                <select id="projectionMethodSelect" aria-label="Projection method">
+                  <option value="pca" data-i18n="projectionPca">PCA 投影</option>
+                  <option value="numeric" data-i18n="projectionNumeric">前两个数值特征</option>
+                  <option value="encoded" data-i18n="projectionEncoded">前两个编码特征</option>
+                </select>
+                <button id="drawResultChartBtn" class="secondary" data-i18n="draw">绘制</button>
+                <button id="saveResultChartBtn" class="secondary" data-i18n="saveChart">保存图表</button>
+              </div>
+            </div>
+            <div class="chart-shell">
+              <canvas id="resultCanvas" width="1200" height="720"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section id="predict" class="tab-panel">
+          <div class="panel wide">
+            <div class="panel-head">
+              <h2 data-i18n="singlePrediction">单条预测</h2>
+              <button id="predictBtn" data-i18n="predictNow">预测</button>
+            </div>
+            <div id="predictionForm" class="prediction-grid"></div>
+            <div id="predictionOutput" class="prediction-output"></div>
+          </div>
+          <div class="panel wide">
+            <div class="panel-head">
+              <h2 data-i18n="batchPrediction">批量预测</h2>
+              <button id="batchPredictBtn" class="secondary" data-i18n="runBatch">上传文件并预测</button>
+            </div>
+            <div class="batch-grid">
+              <label>
+                <span data-i18n="batchFile">预测文件</span>
+                <input id="batchFileInput" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls">
+              </label>
+              <div id="batchRequirement" class="dataset-info"></div>
+            </div>
+            <p class="muted" data-i18n="batchHint">上传的新文件必须包含训练时使用的特征列。预测结果会追加到文件最后几列并下载。</p>
+            <div id="batchStatus" class="prediction-output"></div>
+          </div>
+        </section>
+
+        <section id="data" class="tab-panel">
+          <div class="panel wide">
+            <div class="panel-head">
+              <h2 data-i18n="preview">数据预览</h2>
+              <div class="row tight">
+                <label class="inline-control">
+                  <span data-i18n="previewRows">预览行数</span>
+                  <input id="previewRows" type="number" min="1" max="500" value="5">
+                </label>
+                <button id="exportCleanBtn" class="secondary" data-i18n="exportClean">保存处理后数据</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="dataTable"></table>
+            </div>
+          </div>
+        </section>
+
+        <section id="about" class="tab-panel">
+          <div class="panel wide">
+            <h2 data-i18n="aboutProject">项目信息</h2>
+            <div class="about-grid">
+              <div>
+                <span class="meta-label" data-i18n="softwareTitle">软件标题</span>
+                <strong id="softwareTitle"></strong>
+              </div>
+              <div>
+                <span class="meta-label" data-i18n="version">版本</span>
+                <strong id="softwareVersion"></strong>
+              </div>
+              <div>
+                <span class="meta-label" data-i18n="releaseDate">发布日期</span>
+                <strong id="softwareReleased"></strong>
+              </div>
+              <div>
+                <span class="meta-label" data-i18n="author">作者</span>
+                <strong><a id="authorLink" target="_blank" rel="noreferrer"></a></strong>
+              </div>
+            </div>
+          </div>
+          <div class="panel wide">
+            <div class="panel-head">
+              <h2 data-i18n="citation">软件引用</h2>
+              <button id="copyCitationBtn" class="secondary" data-i18n="copyCitation">复制引用</button>
+            </div>
+            <pre id="citationText" class="log citation-box"></pre>
+          </div>
+          <div class="panel wide">
+            <div class="panel-head">
+              <h2 data-i18n="bibtex">BibTeX</h2>
+              <button id="copyBibtexBtn" class="secondary" data-i18n="copyBibtex">复制 BibTeX</button>
+            </div>
+            <pre id="bibtexText" class="log citation-box"></pre>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="assets/vendor/xlsx.full.min.js"></script>
+    <script src="assets/js/meta.js"></script>
+    <script src="assets/js/i18n.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/default-data.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/ml.js"></script>
+    <script src="assets/js/charts.js"></script>
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>
