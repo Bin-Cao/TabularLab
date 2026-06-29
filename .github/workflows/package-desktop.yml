@@ -30,6 +30,13 @@ jobs:
       - name: Build macOS arm64 app
         run: npm run package:mac:arm64
 
+      - name: Ad-hoc sign macOS apps
+        run: |
+          codesign --force --deep --sign - "dist-desktop/mac/TabularLab.app"
+          codesign --force --deep --sign - "dist-desktop/mac-arm64/TabularLab.app"
+          codesign --verify --deep --strict "dist-desktop/mac/TabularLab.app"
+          codesign --verify --deep --strict "dist-desktop/mac-arm64/TabularLab.app"
+
       - name: Compress macOS app
         run: |
           mkdir -p packaged
