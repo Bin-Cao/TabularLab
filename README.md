@@ -58,6 +58,9 @@ Then open `http://localhost:8000/`.
 | [`assets/js/meta.js`](assets/js/meta.js) | Version, author, citation, repository, and issue metadata. |
 | [`manual/index.html`](manual/index.html) | Bilingual HTML user manual with one-click language switching. |
 | [`.github/workflows/deploy-manual.yml`](.github/workflows/deploy-manual.yml) | GitHub Actions workflow for deploying the manual to GitHub Pages. |
+| [`.github/workflows/package-desktop.yml`](.github/workflows/package-desktop.yml) | Manual GitHub Actions workflow for packaging Windows and macOS desktop apps. |
+| [`electron/main.js`](electron/main.js) | Electron desktop application entry point. |
+| [`package.json`](package.json) | Desktop packaging scripts, Electron dependency, and bundled file configuration. |
 | [`docs/CITATION.bib`](docs/CITATION.bib) | BibTeX citation file. |
 
 ## Example Data
@@ -73,6 +76,18 @@ Then open `http://localhost:8000/`.
 ## Manual and Deployment
 
 The detailed manual is available at [`manual/index.html`](manual/index.html). The workflow [`.github/workflows/deploy-manual.yml`](.github/workflows/deploy-manual.yml) deploys the `manual/` folder to GitHub Pages. In GitHub, set `Settings -> Pages -> Source` to `GitHub Actions`, then run the workflow.
+
+## Desktop App Packaging
+
+The workflow [`.github/workflows/package-desktop.yml`](.github/workflows/package-desktop.yml) packages TabularLab as desktop apps for:
+
+- Windows
+- macOS x64
+- macOS arm64
+
+It is manually triggered from `Actions -> Package Desktop Apps -> Run workflow`. The workflow uploads temporary artifacts with 14-day retention. Each package is compressed as a ZIP file and includes a `.sha256` checksum file for integrity verification. No GitHub Release is created automatically.
+
+Bundled content includes the Electron runtime, all front-end assets, the local Excel parser, example datasets in `data/`, documentation, and the HTML manual.
 
 ## Citation
 

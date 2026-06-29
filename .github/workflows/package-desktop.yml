@@ -1,0 +1,82 @@
+name: Package Desktop Apps
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    name: Package macOS app
+    runs-on: macos-latest
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build macOS x64 app
+        run: npm run package:mac:x64
+
+      - name: Build macOS arm64 app
+        run: npm run package:mac:arm64
+
+      - name: Compress macOS app
+        run: |
+          mkdir -p packaged
+          ditto -c -k --sequesterRsrc --keepParent "dist-desktop/mac/TabularLab.app" "packaged/TabularLab-macOS-x64.zip"
+          ditto -c -k --sequesterRsrc --keepParent "dist-desktop/mac-arm64/TabularLab.app" "packaged/TabularLab-macOS-arm64.zip"
+          shasum -a 256 "packaged/TabularLab-macOS-x64.zip" > "packaged/TabularLab-macOS-x64.zip.sha256"
+          shasum -a 256 "packaged/TabularLab-macOS-arm64.zip" > "packaged/TabularLab-macOS-arm64.zip.sha256"
+
+      - name: Upload macOS package
+        uses: actions/upload-artifact@v4
+        with:
+          name: TabularLab-macOS
+          path: packaged/*
+          retention-days: 14
+          compression-level: 0
+
+  windows:
+    name: Package Windows app
+    runs-on: windows-latest
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Windows app
+        run: npm run package:win
+
+      - name: Compress Windows app
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path packaged | Out-Null
+          Compress-Archive -Path "dist-desktop\win-unpacked\*" -DestinationPath "packaged\TabularLab-Windows.zip" -Force
+          Get-FileHash "packaged\TabularLab-Windows.zip" -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  TabularLab-Windows.zip" } | Set-Content "packaged\TabularLab-Windows.zip.sha256"
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: TabularLab-Windows
+          path: packaged/*
+          retention-days: 14
+          compression-level: 0

@@ -1,0 +1,48 @@
+{
+  "name": "tabularlab",
+  "version": "1.0.0",
+  "description": "A lightweight browser-based toolkit for tabular machine learning.",
+  "author": "Bin Cao",
+  "license": "MIT",
+  "main": "electron/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "package:mac": "electron-builder --mac dir",
+    "package:mac:x64": "electron-builder --mac dir --x64",
+    "package:mac:arm64": "electron-builder --mac dir --arm64",
+    "package:win": "electron-builder --win dir"
+  },
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "io.github.bin-cao.tabularlab",
+    "productName": "TabularLab",
+    "asar": false,
+    "directories": {
+      "output": "dist-desktop"
+    },
+    "files": [
+      "index.html",
+      "assets/**/*",
+      "data/**/*",
+      "manual/**/*",
+      "docs/**/*",
+      "README*.md",
+      "electron/**/*"
+    ],
+    "mac": {
+      "target": [
+        "dir"
+      ],
+      "category": "public.app-category.education"
+    },
+    "win": {
+      "target": [
+        "dir"
+      ]
+    }
+  }
+}
