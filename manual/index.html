@@ -374,8 +374,26 @@
             </ul>
           </section>
 
+          <section class="section" id="zh-roles">
+            <h3>4. 字段角色：特征、目标和忽略</h3>
+            <p>机器学习表格通常由“行”和“列”组成。每一行是一条样本，每一列是一种信息。运行模型前，需要告诉 TabularLab 每一列在任务中扮演什么角色。</p>
+            <h4>特征 Feature</h4>
+            <p>特征是模型用来做判断或预测的输入列。比如用材料密度、热处理温度、元素含量预测强度时，密度、温度和元素含量就是特征。选择特征时应优先选择与目标有合理关系、在预测时也能获得的列。</p>
+            <ul>
+              <li>适合作为特征：实验条件、成分、工艺参数、测量属性、类别描述。</li>
+              <li>不建议作为特征：样本编号、文件名、备注、已经包含答案的信息、预测时无法获得的列。</li>
+              <li>如果某列只是 ID，它可能让模型记住样本而不是学习规律，通常应设为忽略。</li>
+            </ul>
+            <h4>目标 Target</h4>
+            <p>目标是希望模型预测的答案。回归任务的目标通常是数值，例如屈服强度、容量、价格；分类任务的目标通常是类别，例如材料类型、合格/不合格、工艺窗口标签。TabularLab 支持多目标任务，可以一次选择多个目标列。</p>
+            <h4>忽略 Ignore</h4>
+            <p>忽略表示该列不参与训练，也不会作为预测答案。对无关列、泄漏答案的列、过于杂乱的文本列或暂时不确定的列，可以先设为忽略，之后再逐步加入比较结果。</p>
+            <h4>聚类任务中的字段角色</h4>
+            <p>聚类没有目标列，因为它不是学习一个已知答案，而是根据特征相似性自动分组。聚类时应选择能表达样本差异的特征，例如物理性质、成分、工艺条件等。</p>
+          </section>
+
           <section class="section" id="zh-functions">
-            <h3>4. 主要功能</h3>
+            <h3>5. 主要功能</h3>
             <div class="feature-grid">
               <div class="feature-item">
                 <strong>数据导入与预览</strong>
@@ -405,17 +423,72 @@
           </section>
 
           <section class="section" id="zh-models">
-            <h3>5. 任务与模型说明</h3>
+            <h3>6. 任务与模型说明</h3>
             <h4>回归任务</h4>
-            <p>回归用于预测连续数值。可选模型包括 Linear/Ridge Regression、Lasso、ElasticNet、Linear SVR、Decision Tree、Random Forest、Gradient Boosting 和 KNN Regression。常见指标包括 MAE、RMSE 和 R2。</p>
+            <p>回归用于预测连续数值。只要答案是一个可比较大小的数字，通常就是回归问题。例子包括根据材料成分预测屈服强度，根据电池材料参数预测容量，根据工艺参数预测性能。</p>
+            <ul>
+              <li><strong>Linear / Ridge Regression：</strong>线性模型，适合作为基础模型。Ridge 会通过正则化降低过拟合。</li>
+              <li><strong>Lasso / ElasticNet：</strong>带正则化的线性模型，适合特征较多时尝试；Lasso 可能让部分特征权重接近 0。</li>
+              <li><strong>Linear SVR：</strong>线性支持向量回归，对异常值相对稳健，但仍属于简化模型。</li>
+              <li><strong>Decision Tree：</strong>决策树可表达非线性关系，容易理解，但过深时容易过拟合。</li>
+              <li><strong>Random Forest：</strong>多棵树投票/平均，通常比单棵树更稳定，适合很多表格数据。</li>
+              <li><strong>Gradient Boosting：</strong>逐步修正误差，常能获得较好精度，但参数更敏感。</li>
+              <li><strong>KNN Regression：</strong>根据相似样本平均预测，直观但对特征尺度和无关特征较敏感。</li>
+            </ul>
             <h4>分类任务</h4>
-            <p>分类用于预测离散类别。可选模型包括 Softmax Logistic、Linear SVM、Decision Tree、Random Forest、Gaussian Naive Bayes 和 KNN Classifier。常见指标包括 Accuracy、Precision、Recall、F1 和混淆矩阵。</p>
+            <p>分类用于预测离散类别。只要答案是一个标签，通常就是分类问题。例子包括判断材料属于哪一类、工艺是否合格、样品是否落在可接受窗口内。</p>
+            <ul>
+              <li><strong>Softmax Logistic：</strong>多分类线性模型，适合做基线模型，结果较容易解释。</li>
+              <li><strong>Linear SVM：</strong>线性分类模型，适合类别边界较清楚的数据。</li>
+              <li><strong>Decision Tree：</strong>用一系列条件判断分类，直观但可能过拟合。</li>
+              <li><strong>Random Forest：</strong>通常比单棵树更稳健，是表格分类的常用选择。</li>
+              <li><strong>Gaussian Naive Bayes：</strong>速度快，适合做快速基线，但假设较强。</li>
+              <li><strong>KNN Classifier：</strong>根据邻近样本投票分类，适合局部相似性明显的数据。</li>
+            </ul>
             <h4>聚类任务</h4>
-            <p>聚类用于无监督分组。可选模型包括 KMeans、DBSCAN 和 Agglomerative Clustering。聚类不需要目标列，也不需要训练/测试集划分；界面会使用全部选中特征数据进行聚类。</p>
+            <p>聚类用于无监督分组，也就是在没有目标答案的情况下，让模型根据样本相似性自动发现分群。聚类不需要目标列，也不需要训练/测试集划分；界面会使用全部选中特征数据进行聚类。</p>
+            <ul>
+              <li><strong>KMeans：</strong>需要指定簇数 K，适合希望得到固定数量分组的场景。</li>
+              <li><strong>DBSCAN：</strong>根据密度发现簇，可以识别噪声点；适合簇形状不规则或存在离群点的数据。</li>
+              <li><strong>Agglomerative Clustering：</strong>层次聚类，从每个样本单独成簇开始逐步合并，适合观察样本层次结构。</li>
+            </ul>
+          </section>
+
+          <section class="section" id="zh-params">
+            <h3>7. 参数设置与评估指标</h3>
+            <h4>预处理参数</h4>
+            <ul>
+              <li><strong>缺失值策略：</strong>均值/众数适合常规数据；中位数/众数对极端值更稳健；0/Unknown 适合 0 有明确含义或需要保留未知类别的情况。</li>
+              <li><strong>文本/符号编码：</strong>独热编码适合类别数量不太多且类别之间没有大小顺序的列；序号编码更紧凑，但会引入人为顺序。</li>
+              <li><strong>测试集比例：</strong>监督学习中用于留出一部分数据做最终评估。数据很少时比例不要过大，常见值为 0.2 到 0.3。</li>
+              <li><strong>随机种子：</strong>控制数据划分和部分模型的随机过程。固定种子可以让结果更容易复现。</li>
+              <li><strong>交叉验证与折数：</strong>K 折交叉验证会多次训练/验证，更充分利用数据；折数越大通常越慢。</li>
+            </ul>
+            <h4>模型超参数</h4>
+            <ul>
+              <li><strong>K：</strong>在 KMeans/层次聚类中表示簇数，在 KNN 中表示参考的邻居数量。K 太小可能不稳定，太大可能过度平滑。</li>
+              <li><strong>树最大深度：</strong>限制决策树复杂度。深度越大越能拟合细节，也越容易过拟合。</li>
+              <li><strong>树数量：</strong>随机森林中的树越多通常越稳定，但运行更慢。</li>
+              <li><strong>学习率：</strong>每次更新的步长。较小学习率更稳但可能需要更多训练轮数。</li>
+              <li><strong>正则化强度：</strong>用于抑制过拟合。数值越大，模型越保守。</li>
+              <li><strong>训练轮数：</strong>线性/逻辑模型更新参数的次数。轮数太少可能欠拟合，太多会增加运行时间。</li>
+              <li><strong>DBSCAN eps：</strong>判断样本互为邻居的距离阈值。过小会产生很多噪声，过大可能把不同簇合并。</li>
+              <li><strong>DBSCAN minPts：</strong>形成核心点所需的最少邻居数。数值越大，对簇密度要求越高。</li>
+            </ul>
+            <h4>常见评估指标</h4>
+            <ul>
+              <li><strong>MAE：</strong>平均绝对误差，越小越好，容易理解为平均偏差大小。</li>
+              <li><strong>RMSE：</strong>均方根误差，越小越好，对大误差更敏感。</li>
+              <li><strong>R2：</strong>回归拟合优度，越接近 1 通常越好；接近 0 表示相对基线改进有限。</li>
+              <li><strong>Accuracy：</strong>分类准确率，表示预测正确比例；类别极不均衡时不要只看准确率。</li>
+              <li><strong>Precision / Recall / F1：</strong>分别关注预测为某类时有多准、真实某类被找回多少、两者综合表现。</li>
+              <li><strong>混淆矩阵：</strong>展示每个真实类别被预测成各类别的数量，适合分析分类错误来源。</li>
+              <li><strong>聚类 inertia / sizes / noise：</strong>用于观察簇内紧密程度、每簇样本数和 DBSCAN 噪声点数量。</li>
+            </ul>
           </section>
 
           <section class="section" id="zh-workflow">
-            <h3>6. 标签页使用说明</h3>
+            <h3>8. 标签页使用说明</h3>
             <ul>
               <li><strong>概览：</strong>查看数据集规模、缺失值情况、字段类型、唯一值、均值、标准差、最小值和最大值。</li>
               <li><strong>可视化：</strong>绘制直方图、散点图、相关性热力图和目标关系图，并保存为 PNG。</li>
@@ -427,23 +500,26 @@
           </section>
 
           <section class="section" id="zh-export">
-            <h3>7. 保存与引用</h3>
+            <h3>9. 保存与引用</h3>
             <ul>
               <li>图表可保存为 PNG 文件。</li>
               <li>模型结果可保存为 JSON，包含任务类型、目标列、特征列、评估模式和指标。</li>
               <li>预测结果可保存为 CSV，便于后续分析或报告。</li>
               <li>处理后数据可保存为 CSV，用于复现实验或导入其他软件。</li>
-              <li>引用信息可在“版本与引用”或“关于”标签页复制。</li>
+              <li>引用信息可在“版本与引用”或“关于”标签页复制。如果在论文、报告、课程或项目中使用 TabularLab，建议引用软件名称、作者、版本和仓库地址。</li>
             </ul>
+            <p>推荐引用格式：</p>
+            <pre><code>Bin Cao. (2026). TabularLab : A lightweight toolkit for tabular machine learning. Version 1.0.0. https://github.com/bin-cao/TabularLab</code></pre>
           </section>
 
           <section class="section note" id="zh-notes">
-            <h3>8. 注意事项</h3>
+            <h3>10. 注意事项</h3>
             <ul>
               <li>TabularLab 面向中小型数据和快速实验，不建议直接用于百万行级生产训练。</li>
-              <li>所有计算在浏览器中执行，浏览器性能会影响运行速度。</li>
+              <li>运行速度取决于本机性能。桌面 App 和浏览器方式都在本设备上处理数据。</li>
               <li>测试集指标只代表划分出的测试集表现；交叉验证指标代表 OOF 预测表现。</li>
               <li>批量预测文件必须包含训练时使用的全部特征列，其他列会保留在输出文件中。</li>
+              <li>模型结果应结合领域知识判断。较高指标不一定表示模型可以直接用于真实生产决策。</li>
             </ul>
           </section>
         </article>
@@ -534,8 +610,26 @@
             </ul>
           </section>
 
+          <section class="section" id="en-roles">
+            <h3>4. Column Roles: Feature, Target, and Ignore</h3>
+            <p>A tabular machine learning dataset is made of rows and columns. Each row is a sample, and each column contains one type of information. Before running a model, TabularLab needs to know how each column should be used.</p>
+            <h4>Feature</h4>
+            <p>Features are the input columns used by the model to make a prediction or discover patterns. For example, if you predict strength from density, heat-treatment temperature, and composition, those input columns are features. Good features should be related to the target and available when future predictions are made.</p>
+            <ul>
+              <li>Good feature candidates: experimental conditions, composition, process parameters, measured properties, and category descriptors.</li>
+              <li>Usually poor feature candidates: sample ID, file name, free-text notes, columns that already contain the answer, or columns unavailable at prediction time.</li>
+              <li>If a column is only an ID, it may encourage the model to memorize samples instead of learning a useful rule. It is usually better to ignore it.</li>
+            </ul>
+            <h4>Target</h4>
+            <p>The target is the answer you want the model to predict. Regression targets are numeric values, such as yield strength, capacity, or price. Classification targets are labels, such as material class, pass/fail, or process-window status. TabularLab also supports multiple target columns.</p>
+            <h4>Ignore</h4>
+            <p>Ignored columns are not used for training and are not predicted. Use this for irrelevant columns, answer-leakage columns, messy text columns, or columns you are not ready to include.</p>
+            <h4>Roles in Clustering</h4>
+            <p>Clustering has no target column because it does not learn from known answers. It groups samples by feature similarity. Choose features that describe meaningful differences between samples, such as physical properties, composition, or processing conditions.</p>
+          </section>
+
           <section class="section" id="en-functions">
-            <h3>4. Main Functions</h3>
+            <h3>5. Main Functions</h3>
             <div class="feature-grid">
               <div class="feature-item">
                 <strong>Data import and preview</strong>
@@ -565,17 +659,72 @@
           </section>
 
           <section class="section" id="en-models">
-            <h3>5. Tasks and Models</h3>
+            <h3>6. Tasks and Models</h3>
             <h4>Regression</h4>
-            <p>Regression predicts continuous numeric values. Available models include Linear/Ridge Regression, Lasso, ElasticNet, Linear SVR, Decision Tree, Random Forest, Gradient Boosting, and KNN Regression. Common metrics include MAE, RMSE, and R2.</p>
+            <p>Regression predicts continuous numeric values. If the answer is a number with magnitude and units, it is usually a regression problem. Examples include predicting yield strength from composition, battery capacity from material parameters, or performance from process settings.</p>
+            <ul>
+              <li><strong>Linear / Ridge Regression:</strong> A simple baseline model. Ridge regularization helps reduce overfitting.</li>
+              <li><strong>Lasso / ElasticNet:</strong> Regularized linear models. They are useful when there are many features; Lasso can shrink some weights toward zero.</li>
+              <li><strong>Linear SVR:</strong> A linear support-vector regressor. It can be more robust to some errors but is still a simplified model.</li>
+              <li><strong>Decision Tree:</strong> Captures nonlinear rules and is easy to understand, but deep trees can overfit.</li>
+              <li><strong>Random Forest:</strong> Combines many trees and is usually more stable than a single tree for tabular data.</li>
+              <li><strong>Gradient Boosting:</strong> Builds models sequentially to correct previous errors. It can be accurate but is more sensitive to parameters.</li>
+              <li><strong>KNN Regression:</strong> Predicts from nearby samples. It is intuitive but sensitive to feature scaling and irrelevant features.</li>
+            </ul>
             <h4>Classification</h4>
-            <p>Classification predicts discrete labels. Available models include Softmax Logistic, Linear SVM, Decision Tree, Random Forest, Gaussian Naive Bayes, and KNN Classifier. Common outputs include Accuracy, Precision, Recall, F1, and a confusion matrix.</p>
+            <p>Classification predicts discrete labels. If the answer is a class name or category, it is usually a classification problem. Examples include material family, pass/fail status, or whether a sample is inside a process window.</p>
+            <ul>
+              <li><strong>Softmax Logistic:</strong> A linear multi-class classifier. It is a useful baseline and relatively easy to interpret.</li>
+              <li><strong>Linear SVM:</strong> A linear classifier that works well when class boundaries are fairly clear.</li>
+              <li><strong>Decision Tree:</strong> Uses a sequence of rules for classification. It is readable but can overfit.</li>
+              <li><strong>Random Forest:</strong> Often more robust than a single tree and a common choice for tabular classification.</li>
+              <li><strong>Gaussian Naive Bayes:</strong> Fast and useful as a quick baseline, but it makes strong assumptions.</li>
+              <li><strong>KNN Classifier:</strong> Classifies by voting among nearby samples. It works best when local similarity is meaningful.</li>
+            </ul>
             <h4>Clustering</h4>
-            <p>Clustering discovers groups without labels. Available models include KMeans, DBSCAN, and Agglomerative Clustering. It does not need a target column or train/test split; all selected feature rows are used for clustering.</p>
+            <p>Clustering discovers groups without labels. It is useful when you do not already know the answer but want to explore natural groupings in the data. It does not need a target column or train/test split; all selected feature rows are used for clustering.</p>
+            <ul>
+              <li><strong>KMeans:</strong> Requires a cluster count K. It is useful when you want a fixed number of groups.</li>
+              <li><strong>DBSCAN:</strong> Finds dense regions and can label noise points. It is useful for irregular cluster shapes or outliers.</li>
+              <li><strong>Agglomerative Clustering:</strong> A hierarchical method that starts from individual samples and merges them step by step.</li>
+            </ul>
+          </section>
+
+          <section class="section" id="en-params">
+            <h3>7. Parameters and Metrics</h3>
+            <h4>Preprocessing Parameters</h4>
+            <ul>
+              <li><strong>Missing-value strategy:</strong> Mean/mode is a common default; median/mode is more robust to outliers; 0/Unknown is useful when zero or unknown has a meaningful interpretation.</li>
+              <li><strong>Text/symbol encoding:</strong> One-hot encoding is suitable for categories without natural order and moderate category counts. Ordinal encoding is compact but introduces an artificial order.</li>
+              <li><strong>Test size:</strong> Holds out part of supervised data for final evaluation. Common values are around 0.2 to 0.3.</li>
+              <li><strong>Random seed:</strong> Controls splits and some model randomness. A fixed seed makes results easier to reproduce.</li>
+              <li><strong>Cross validation and folds:</strong> K-fold cross validation trains and validates multiple times, using data more fully. More folds usually take longer.</li>
+            </ul>
+            <h4>Model Hyperparameters</h4>
+            <ul>
+              <li><strong>K:</strong> The cluster count for KMeans/agglomerative clustering, or the neighbor count for KNN. Too small can be unstable; too large can oversmooth.</li>
+              <li><strong>Max tree depth:</strong> Limits tree complexity. Deeper trees can fit details but may overfit.</li>
+              <li><strong>Tree count:</strong> More random-forest trees are usually more stable but slower.</li>
+              <li><strong>Learning rate:</strong> Controls the update size. Smaller values are steadier but may need more training rounds.</li>
+              <li><strong>Regularization:</strong> Penalizes overly complex models. Larger values make the model more conservative.</li>
+              <li><strong>Epochs:</strong> Number of parameter-update passes for linear/logistic models. Too few can underfit; too many increase runtime.</li>
+              <li><strong>DBSCAN eps:</strong> Distance threshold for neighborhood membership. Too small creates many noise points; too large may merge separate clusters.</li>
+              <li><strong>DBSCAN minPts:</strong> Minimum neighbors required for a core point. Larger values require denser clusters.</li>
+            </ul>
+            <h4>Common Metrics</h4>
+            <ul>
+              <li><strong>MAE:</strong> Mean absolute error. Lower is better and easy to read as average error size.</li>
+              <li><strong>RMSE:</strong> Root mean squared error. Lower is better and more sensitive to large errors.</li>
+              <li><strong>R2:</strong> Regression goodness-of-fit. Values closer to 1 are usually better; values near 0 indicate limited improvement over a baseline.</li>
+              <li><strong>Accuracy:</strong> Fraction of correct classifications. For imbalanced classes, do not rely on accuracy alone.</li>
+              <li><strong>Precision / Recall / F1:</strong> Precision asks how reliable positive predictions are; recall asks how many real positives were found; F1 balances both.</li>
+              <li><strong>Confusion matrix:</strong> Shows how true classes are predicted, helping identify error patterns.</li>
+              <li><strong>Clustering inertia / sizes / noise:</strong> Help inspect compactness, cluster sizes, and DBSCAN noise points.</li>
+            </ul>
           </section>
 
           <section class="section" id="en-workflow">
-            <h3>6. Tab Guide</h3>
+            <h3>8. Tab Guide</h3>
             <ul>
               <li><strong>Overview:</strong> Inspect dataset size, missing values, column types, unique values, mean, standard deviation, minimum, and maximum.</li>
               <li><strong>Visuals:</strong> Draw histograms, scatter plots, correlation heatmaps, and target plots, then save charts as PNG files.</li>
@@ -587,23 +736,26 @@
           </section>
 
           <section class="section" id="en-export">
-            <h3>7. Saving and Citation</h3>
+            <h3>9. Saving and Citation</h3>
             <ul>
               <li>Charts can be saved as PNG files.</li>
               <li>Model results can be saved as JSON with task type, targets, features, evaluation mode, and metrics.</li>
               <li>Prediction outputs can be saved as CSV for downstream analysis or reporting.</li>
               <li>Processed data can be saved as CSV for reproducibility or use in other tools.</li>
-              <li>Citation text can be copied from the Version & Citation panel or the About tab.</li>
+              <li>Citation text can be copied from the Version & Citation panel or the About tab. If you use TabularLab in a paper, report, class, or project, cite the software title, author, version, and repository.</li>
             </ul>
+            <p>Recommended citation:</p>
+            <pre><code>Bin Cao. (2026). TabularLab : A lightweight toolkit for tabular machine learning. Version 1.0.0. https://github.com/bin-cao/TabularLab</code></pre>
           </section>
 
           <section class="section note" id="en-notes">
-            <h3>8. Notes</h3>
+            <h3>10. Notes</h3>
             <ul>
               <li>TabularLab is designed for small to medium datasets and quick experiments, not million-row production training.</li>
               <li>Runtime depends on the local computer. Browser use is affected by browser performance, while desktop app use is affected by the bundled Electron runtime and system resources.</li>
               <li>Test metrics represent the held-out test split. Cross-validation metrics represent out-of-fold predictions.</li>
               <li>Batch prediction files must contain every feature column used during training. Other columns are preserved in the output.</li>
+              <li>Model results should be interpreted with domain knowledge. Good metrics do not automatically mean a model is ready for production decisions.</li>
             </ul>
           </section>
         </article>
@@ -621,8 +773,10 @@
           ["zh-purpose", "界面目的"],
           ["zh-start", "快速开始"],
           ["zh-data", "数据源与要求"],
+          ["zh-roles", "字段角色"],
           ["zh-functions", "主要功能"],
           ["zh-models", "任务与模型"],
+          ["zh-params", "参数与指标"],
           ["zh-workflow", "标签页说明"],
           ["zh-export", "保存与引用"],
           ["zh-notes", "注意事项"]
@@ -632,8 +786,10 @@
           ["en-purpose", "Purpose"],
           ["en-start", "Quick Start"],
           ["en-data", "Data Requirements"],
+          ["en-roles", "Column Roles"],
           ["en-functions", "Main Functions"],
           ["en-models", "Tasks and Models"],
+          ["en-params", "Parameters and Metrics"],
           ["en-workflow", "Tab Guide"],
           ["en-export", "Saving and Citation"],
           ["en-notes", "Notes"]
