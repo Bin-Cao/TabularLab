@@ -5,7 +5,8 @@
   <a href="https://github.com/bin-cao/TabularLab/forks"><img alt="GitHub forks" src="https://img.shields.io/github/forks/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/bin-cao/TabularLab"></a>
   <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-v1.0.0-146c5f"></a>
-  <a href="manual/index.html"><img alt="Manual" src="https://img.shields.io/badge/manual-GitHub%20Pages-146c5f"></a>
+  <a href="https://bin-cao.github.io/TabularLab/"><img alt="Manual" src="https://img.shields.io/badge/manual-online-146c5f"></a>
+  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
 </p>
 
 <p align="center">
@@ -17,16 +18,23 @@
   <a href="README.fr.md">Français</a>
 </p>
 
-**TabularLab** is a lightweight browser-based toolkit for tabular machine learning. It runs locally in the browser and supports regression, classification, clustering, visualization, prediction, and result export.
+**TabularLab** is a lightweight toolkit for tabular machine learning. It can be used as a desktop app or opened in a browser, and supports regression, classification, clustering, visualization, prediction, and result export.
 
 **Author:** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  
 **Version:** `v1.0.0`  
 **Repository:** <https://github.com/bin-cao/TabularLab>  
+**Download Apps:** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0>  
 **Feedback:** Please open an issue on [GitHub Issues](https://github.com/bin-cao/TabularLab/issues).
 
 ## Quick Start
 
-Open [`index.html`](index.html) in a browser. For the best local experience, start a static server:
+Download the Windows or macOS app from:
+
+```text
+https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0
+```
+
+You can also open [`index.html`](index.html) in a browser. For local browser use, start a static server:
 
 ```bash
 python3 -m http.server 8000
@@ -50,17 +58,13 @@ Then open `http://localhost:8000/`.
 | --- | --- |
 | [`index.html`](index.html) | Main TabularLab web application. |
 | [`assets/css/styles.css`](assets/css/styles.css) | Main UI styling. |
-| [`assets/js/app.js`](assets/js/app.js) | UI workflow, model execution, prediction, and export logic. |
+| [`assets/js/app.js`](assets/js/app.js) | UI flow, model execution, prediction, and export logic. |
 | [`assets/js/ml.js`](assets/js/ml.js) | Browser-side machine learning implementations and metrics. |
 | [`assets/js/data.js`](assets/js/data.js) | Data parsing, preprocessing, splitting, and transformations. |
 | [`assets/js/charts.js`](assets/js/charts.js) | Canvas chart rendering and export helpers. |
 | [`assets/js/i18n.js`](assets/js/i18n.js) | Chinese and English UI text. |
 | [`assets/js/meta.js`](assets/js/meta.js) | Version, author, citation, repository, and issue metadata. |
 | [`manual/index.html`](manual/index.html) | Bilingual HTML user manual with one-click language switching. |
-| [`.github/workflows/deploy-manual.yml`](.github/workflows/deploy-manual.yml) | GitHub Actions workflow for deploying the manual to GitHub Pages. |
-| [`.github/workflows/package-desktop.yml`](.github/workflows/package-desktop.yml) | Manual GitHub Actions workflow for packaging Windows and macOS desktop apps. |
-| [`electron/main.js`](electron/main.js) | Electron desktop application entry point. |
-| [`package.json`](package.json) | Desktop packaging scripts, Electron dependency, and bundled file configuration. |
 | [`docs/CITATION.bib`](docs/CITATION.bib) | BibTeX citation file. |
 
 ## Example Data
@@ -72,22 +76,6 @@ Then open `http://localhost:8000/`.
 | [`data/classification_heat_treatment_window`](data/classification_heat_treatment_window) | Heat-treatment window classification. |
 | [`data/clustering_alloy_families`](data/clustering_alloy_families) | Alloy family clustering. |
 | [`data/mixed_battery_multi_target`](data/mixed_battery_multi_target) | Battery-material multi-target regression. |
-
-## Manual and Deployment
-
-The detailed manual is available at [`manual/index.html`](manual/index.html). The workflow [`.github/workflows/deploy-manual.yml`](.github/workflows/deploy-manual.yml) deploys the `manual/` folder to GitHub Pages. In GitHub, set `Settings -> Pages -> Source` to `GitHub Actions`, then run the workflow.
-
-## Desktop App Packaging
-
-The workflow [`.github/workflows/package-desktop.yml`](.github/workflows/package-desktop.yml) packages TabularLab as desktop apps for:
-
-- Windows
-- macOS x64
-- macOS arm64
-
-It is manually triggered from `Actions -> Package Desktop Apps -> Run workflow`. The workflow uploads temporary artifacts with 14-day retention. Each package is compressed as a ZIP file and includes a `.sha256` checksum file for integrity verification. No GitHub Release is created automatically.
-
-Bundled content includes the Electron runtime, all front-end assets, the local Excel parser, example datasets in `data/`, documentation, and the HTML manual.
 
 ## Citation
 

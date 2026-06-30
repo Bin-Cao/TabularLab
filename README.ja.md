@@ -5,7 +5,8 @@
   <a href="https://github.com/bin-cao/TabularLab/forks"><img alt="GitHub forks" src="https://img.shields.io/github/forks/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/bin-cao/TabularLab"></a>
   <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-v1.0.0-146c5f"></a>
-  <a href="manual/index.html"><img alt="Manual" src="https://img.shields.io/badge/manual-GitHub%20Pages-146c5f"></a>
+  <a href="https://bin-cao.github.io/TabularLab/"><img alt="Manual" src="https://img.shields.io/badge/manual-online-146c5f"></a>
+  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
 </p>
 
 <p align="center">
@@ -17,16 +18,23 @@
   <a href="README.fr.md">Français</a>
 </p>
 
-**TabularLab** は、ブラウザ上で動作する軽量な表形式データ向け機械学習ツールです。ローカルブラウザ内で計算を行い、回帰、分類、クラスタリング、可視化、予測、結果のエクスポートに対応します。
+**TabularLab** は、表形式データ向けの軽量な機械学習ツールです。デスクトップ App として利用でき、ブラウザでも開けます。回帰、分類、クラスタリング、可視化、予測、結果のエクスポートに対応します。
 
 **作者:** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  
 **バージョン:** `v1.0.0`  
 **リポジトリ:** <https://github.com/bin-cao/TabularLab>  
+**App ダウンロード:** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0>  
 **フィードバック:** 改善提案は [GitHub Issues](https://github.com/bin-cao/TabularLab/issues) に投稿してください。
 
 ## クイックスタート
 
-ブラウザで [`index.html`](index.html) を開きます。既定データを安定して読み込むには、ローカル静的サーバーを起動します。
+Windows または macOS App は次のページからダウンロードできます。
+
+```text
+https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0
+```
+
+ブラウザで [`index.html`](index.html) を開くこともできます。ブラウザでローカル利用する場合は、静的サーバーの使用を推奨します。
 
 ```bash
 python3 -m http.server 8000
@@ -55,12 +63,7 @@ python3 -m http.server 8000
 | [`assets/js/data.js`](assets/js/data.js) | データ解析、前処理、分割、変換。 |
 | [`assets/js/charts.js`](assets/js/charts.js) | グラフ描画とエクスポート。 |
 | [`manual/index.html`](manual/index.html) | 言語切り替え対応の HTML マニュアル。 |
-| [`.github/workflows/deploy-manual.yml`](.github/workflows/deploy-manual.yml) | GitHub Pages へのマニュアル配信 workflow。 |
 
 ## サンプルデータ
 
 `data/` には、合金強度回帰、材料分類、熱処理分類、合金クラスタリング、電池材料多目的回帰のサンプルがあります。
-
-## マニュアルとデプロイ
-
-詳細マニュアルは [`manual/index.html`](manual/index.html) にあります。GitHub Pages で公開するには、`Settings -> Pages -> Source` を `GitHub Actions` に設定し、workflow を実行します。

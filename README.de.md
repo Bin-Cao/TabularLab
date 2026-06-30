@@ -5,7 +5,8 @@
   <a href="https://github.com/bin-cao/TabularLab/forks"><img alt="GitHub forks" src="https://img.shields.io/github/forks/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/bin-cao/TabularLab"></a>
   <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-v1.0.0-146c5f"></a>
-  <a href="manual/index.html"><img alt="Manual" src="https://img.shields.io/badge/manual-GitHub%20Pages-146c5f"></a>
+  <a href="https://bin-cao.github.io/TabularLab/"><img alt="Manual" src="https://img.shields.io/badge/manual-online-146c5f"></a>
+  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
 </p>
 
 <p align="center">
@@ -17,16 +18,23 @@
   <a href="README.fr.md">Français</a>
 </p>
 
-**TabularLab** ist ein leichtgewichtiges browserbasiertes Toolkit fuer maschinelles Lernen mit tabellarischen Daten. Es laeuft lokal im Browser und unterstuetzt Regression, Klassifikation, Clustering, Visualisierung, Vorhersage und Ergebnisexport.
+**TabularLab** ist ein leichtgewichtiges Toolkit fuer maschinelles Lernen mit tabellarischen Daten. Es kann als Desktop-App oder im Browser verwendet werden und unterstuetzt Regression, Klassifikation, Clustering, Visualisierung, Vorhersage und Ergebnisexport.
 
 **Autor:** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  
 **Version:** `v1.0.0`  
 **Repository:** <https://github.com/bin-cao/TabularLab>  
+**App-Download:** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0>  
 **Feedback:** Vorschlaege bitte ueber [GitHub Issues](https://github.com/bin-cao/TabularLab/issues) einreichen.
 
 ## Schnellstart
 
-Oeffnen Sie [`index.html`](index.html) im Browser. Fuer ein stabileres lokales Laden der Beispieldaten starten Sie einen statischen Server:
+Laden Sie die Windows- oder macOS-App hier herunter:
+
+```text
+https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0
+```
+
+Alternativ koennen Sie [`index.html`](index.html) im Browser oeffnen. Fuer die lokale Browser-Nutzung wird ein statischer Server empfohlen:
 
 ```bash
 python3 -m http.server 8000
@@ -55,12 +63,7 @@ Danach `http://localhost:8000/` oeffnen.
 | [`assets/js/data.js`](assets/js/data.js) | Datenparsing, Vorverarbeitung, Aufteilung und Transformation. |
 | [`assets/js/charts.js`](assets/js/charts.js) | Diagrammrendering und Export. |
 | [`manual/index.html`](manual/index.html) | HTML-Handbuch mit Sprachumschaltung. |
-| [`.github/workflows/deploy-manual.yml`](.github/workflows/deploy-manual.yml) | Workflow fuer GitHub-Pages-Deployment. |
 
 ## Beispieldaten
 
 Der Ordner `data/` enthaelt Beispiele fuer Legierungsfestigkeits-Regression, Materialklassifikation, Waermebehandlungs-Klassifikation, Legierungs-Clustering und Mehrziel-Regression fuer Batteriematerialien.
-
-## Handbuch und Deployment
-
-Das Handbuch befindet sich unter [`manual/index.html`](manual/index.html). Fuer GitHub Pages setzen Sie `Settings -> Pages -> Source` auf `GitHub Actions` und fuehren den Workflow aus.
