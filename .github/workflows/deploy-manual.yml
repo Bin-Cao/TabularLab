@@ -30,10 +30,18 @@ jobs:
         with:
           enablement: true
 
+      - name: Prepare manual site
+        run: |
+          mkdir -p _site
+          cp manual/index.html _site/index.html
+          perl -0pi -e 's#src="../docs/#src="docs/#g' _site/index.html
+          cp manual/.nojekyll _site/.nojekyll
+          cp -R docs _site/docs
+
       - name: Upload manual artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: manual
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
