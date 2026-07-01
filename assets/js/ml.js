@@ -286,13 +286,14 @@
 
   function trainGaussianNB(X, y, options) {
     const classes = Array.from(new Set(y)).sort((a, b) => a - b);
+    const varSmoothing = Math.max(1e-12, options.varSmoothing ?? 1e-6);
     const stats = classes.map((klass) => {
       const rows = X.filter((_, i) => y[i] === klass);
       return {
         klass,
         prior: rows.length / X.length,
         mean: X[0].map((_, j) => Utils.mean(rows.map((row) => row[j]))),
-        variance: X[0].map((_, j) => Math.max(1e-6, variance(rows.map((row) => row[j]))))
+        variance: X[0].map((_, j) => Math.max(varSmoothing, variance(rows.map((row) => row[j]))))
       };
     });
     return {
@@ -469,7 +470,7 @@
     if (task === "classification" && modelName === "svm") return trainLinearSvm(X, y, { labels: options.labels, lambda: params.lambda ?? 0.01, lr: params.lr || 0.03, epochs: params.epochs || 700 });
     if (task === "classification" && modelName === "tree") return trainDecisionTree(X, y, { task, maxDepth: params.maxDepth || 7 });
     if (task === "classification" && modelName === "forest") return trainRandomForest(X, y, { task, seed: options.seed, trees: params.trees || 25, maxDepth: params.maxDepth || 8 });
-    if (task === "classification" && modelName === "gnb") return trainGaussianNB(X, y, { labels: options.labels });
+    if (task === "classification" && modelName === "gnb") return trainGaussianNB(X, y, { labels: options.labels, varSmoothing: params.varSmoothing ?? 1e-6 });
     if (task === "classification" && modelName === "knn") return trainKnn(X, y, { task, k: params.k || 5, labels: options.labels });
     if (task === "classification") return trainSoftmax(X, y, { classCount: options.labels.length, labels: options.labels, lambda: params.lambda ?? 0.003, lr: params.lr || 0.08, epochs: params.epochs || 800 });
     if (modelName === "dbscan") return trainDBSCAN(X, { eps: params.eps || 1.25, minPts: params.minPts || 4 });

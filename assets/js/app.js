@@ -100,6 +100,9 @@
     knn: [
       { key: "k", label: "paramK", help: "paramKHelp", min: 1, max: 50, step: 1, value: 5 }
     ],
+    gnb: [
+      { key: "varSmoothing", label: "paramVarSmoothing", help: "paramVarSmoothingHelp", min: 0.000000001, max: 0.01, step: 0.000000001, value: 0.000001 }
+    ],
     softmax: [
       { key: "lambda", label: "paramRegularization", help: "paramRegularizationHelp", min: 0, max: 1, step: 0.001, value: 0.003 },
       { key: "lr", label: "paramLearningRate", help: "paramLearningRateHelp", min: 0.001, max: 1, step: 0.001, value: 0.08 },
@@ -120,6 +123,23 @@
     agglomerative: [
       { key: "k", label: "paramK", help: "paramKHelp", min: 2, max: 20, step: 1, value: 3 }
     ]
+  };
+
+  const tuningSearchSpaces = {
+    linear: { lambda: [0, 0.003, 0.01, 0.03, 0.08], lr: [0.01, 0.03, 0.06], epochs: [300, 700, 1100] },
+    lasso: { lambda: [0.005, 0.02, 0.04, 0.08, 0.15], lr: [0.01, 0.025, 0.05], epochs: [400, 800, 1200] },
+    elasticnet: { lambda: [0.003, 0.015, 0.025, 0.06, 0.12], lr: [0.01, 0.025, 0.05], epochs: [400, 800, 1200] },
+    svr: { lambda: [0.003, 0.01, 0.02, 0.05, 0.1], lr: [0.01, 0.025, 0.05], epochs: [400, 800, 1200] },
+    tree: { maxDepth: [3, 5, 7, 10, 14] },
+    forest: { trees: [15, 25, 45], maxDepth: [4, 8, 12] },
+    gbr: { estimators: [20, 35, 60], lr: [0.05, 0.12, 0.2], maxDepth: [1, 2, 3] },
+    knn: { k: [1, 3, 5, 7, 11] },
+    softmax: { lambda: [0, 0.001, 0.003, 0.01, 0.03], lr: [0.03, 0.08, 0.15], epochs: [300, 700, 1100] },
+    svm: { lambda: [0.001, 0.005, 0.01, 0.03, 0.08], lr: [0.01, 0.03, 0.06], epochs: [300, 700, 1000] },
+    gnb: { varSmoothing: [0.000000001, 0.00000001, 0.0000001, 0.000001, 0.00001] },
+    kmeans: { k: [2, 3, 4, 5, 6] },
+    dbscan: { eps: [0.5, 0.9, 1.25, 1.8, 2.5], minPts: [3, 4, 6] },
+    agglomerative: { k: [2, 3, 4, 5, 6] }
   };
 
   const defaultDatasets = [
@@ -190,12 +210,14 @@
   ].join("\n");
 
   function init() {
-    I18N.apply("zh");
+    I18N.apply("en");
+    $("languageSelect").value = "en";
     bindEvents();
     populateDefaultDatasets();
     updateModels();
     updateTaskUi();
     renderEmpty();
+    updateStatusBar();
   }
 
   function bindEvents() {
@@ -206,12 +228,17 @@
       updateTaskUi();
       renderAll();
       renderCurrentDatasetInfo();
+      updateStatusBar();
     });
     $("themeToggle").addEventListener("click", () => {
       document.body.dataset.theme = document.body.dataset.theme === "dark" ? "" : "dark";
       drawCurrentChart();
     });
-    $("fileInput").addEventListener("change", (e) => loadFile(e.target.files[0]));
+    $("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";
+      loadFile(file);
+    });
     $("loadSampleBtn").addEventListener("click", loadSample);
     $("defaultDatasetSelect").addEventListener("change", renderDefaultDatasetInfo);
     $("clearBtn").addEventListener("click", clearData);
@@ -220,8 +247,12 @@
       updateModels();
       updateTaskUi();
       selectDefaultFeatures();
+      updateStatusBar();
     });
-    $("modelSelect").addEventListener("change", renderModelParams);
+    $("modelSelect").addEventListener("change", () => {
+      renderModelParams();
+      updateStatusBar();
+    });
     $("targetColumn").addEventListener("change", () => {
       state.currentPreset = null;
       syncRolesFromTargetSelect();
@@ -273,6 +304,7 @@
     $("copyOperationCitationBtn").addEventListener("click", () => copyText(TabularLabMeta.citation));
     $("copyOperationBibtexBtn").addEventListener("click", () => copyText(TabularLabMeta.bibtex));
     document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => activateTab(tab.dataset.tab)));
+    setupCollapsiblePanels();
     setupSidebarResize();
     updateChartControls();
     const dropzone = $("dropzone");
@@ -284,7 +316,10 @@
       e.preventDefault();
       dropzone.classList.remove("dragover");
     }));
-    dropzone.addEventListener("drop", (e) => loadFile(e.dataTransfer.files[0]));
+    dropzone.addEventListener("drop", (e) => {
+      $("fileInput").value = "";
+      loadFile(e.dataTransfer.files[0]);
+    });
     $("columnRoleTable").addEventListener("change", (e) => {
       if (!e.target.classList.contains("role-radio")) return;
       const column = e.target.value;
@@ -299,6 +334,46 @@
   function activateTab(name) {
     document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === name));
     document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.toggle("active", panel.id === name));
+  }
+
+  function setupCollapsiblePanels() {
+    document.querySelectorAll(".sidebar > .panel").forEach((panel, index) => {
+      const heading = panel.querySelector(":scope > h2");
+      if (!heading || panel.querySelector(":scope > .panel-toggle")) return;
+      const panelId = panel.dataset.panelId || `sidebar-panel-${index}`;
+      panel.dataset.panelId = panelId;
+      const content = document.createElement("div");
+      content.className = "panel-collapsible-content";
+      Array.from(panel.children).forEach((child) => {
+        if (child !== heading) content.appendChild(child);
+      });
+      const title = document.createElement("span");
+      title.className = "panel-toggle-title";
+      title.textContent = heading.textContent;
+      const i18nKey = heading.getAttribute("data-i18n");
+      if (i18nKey) title.setAttribute("data-i18n", i18nKey);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "panel-toggle";
+      button.setAttribute("aria-expanded", "true");
+      button.appendChild(title);
+      heading.remove();
+      panel.appendChild(button);
+      panel.appendChild(content);
+      const saved = localStorage.getItem(`tabularlab.${panelId}.collapsed`);
+      setPanelCollapsed(panel, saved === null ? true : saved === "true");
+      button.addEventListener("click", () => {
+        const collapsed = !panel.classList.contains("is-collapsed");
+        setPanelCollapsed(panel, collapsed);
+        localStorage.setItem(`tabularlab.${panelId}.collapsed`, String(collapsed));
+      });
+    });
+  }
+
+  function setPanelCollapsed(panel, collapsed) {
+    panel.classList.toggle("is-collapsed", collapsed);
+    const button = panel.querySelector(":scope > .panel-toggle");
+    if (button) button.setAttribute("aria-expanded", String(!collapsed));
   }
 
   function setupSidebarResize() {
@@ -341,9 +416,10 @@
     const current = $("defaultDatasetSelect").value || defaultDatasets[0].id;
     $("defaultDatasetSelect").innerHTML = "";
     defaultDatasets.forEach((dataset) => {
+      const text = datasetText(dataset);
       const option = document.createElement("option");
       option.value = dataset.id;
-      option.textContent = dataset[I18N.lang].name;
+      option.textContent = text.name;
       $("defaultDatasetSelect").appendChild(option);
     });
     $("defaultDatasetSelect").value = defaultDatasets.some((item) => item.id === current) ? current : defaultDatasets[0].id;
@@ -356,7 +432,7 @@
 
   function renderDefaultDatasetInfo() {
     const dataset = selectedDefaultDataset();
-    const text = dataset[I18N.lang];
+    const text = datasetText(dataset);
     $("defaultDatasetInfo").innerHTML = [
       `<strong>${escapeHtml(text.name)}</strong>`,
       `<span>${escapeHtml(text.description)}</span>`,
@@ -364,6 +440,10 @@
       `<span>${escapeHtml(I18N.t("recommendedTargets"))}: ${escapeHtml(dataset.targets.length ? dataset.targets.join(", ") : I18N.t("clusteringNoTarget"))}</span>`,
       `<span>${escapeHtml(I18N.t("recommendedFeatures"))}: ${escapeHtml(text.features)}</span>`
     ].join("");
+  }
+
+  function datasetText(dataset) {
+    return dataset[I18N.lang] || dataset.en || dataset.zh;
   }
 
   function loadFile(file) {
@@ -386,6 +466,7 @@
   }
 
   function loadSample() {
+    $("fileInput").value = "";
     const dataset = selectedDefaultDataset();
     if (window.TabularLabDefaultData && window.TabularLabDefaultData[dataset.id]) {
       loadText(window.TabularLabDefaultData[dataset.id], dataset.filename, dataset);
@@ -420,6 +501,7 @@
     renderColumnRoles();
     renderAll();
     renderCurrentDatasetInfo();
+    updateStatusBar();
     drawCurrentChart();
     Utils.toast(`${I18N.t("loaded")}: ${state.rows.length} x ${state.columns.length}`);
   }
@@ -435,6 +517,7 @@
   }
 
   function clearData() {
+    $("fileInput").value = "";
     state.rows = [];
     state.columns = [];
     state.schema = [];
@@ -448,6 +531,7 @@
     renderColumnRoles();
     renderEmpty();
     renderCurrentDatasetInfo();
+    updateStatusBar();
   }
 
   function renderCurrentDatasetInfo() {
@@ -458,13 +542,33 @@
       return;
     }
     const source = state.dataSourceType === "default" ? I18N.t("defaultData") : I18N.t("uploadedData");
-    const presetName = state.currentPreset ? state.currentPreset[I18N.lang].name : "";
+    const presetName = state.currentPreset ? datasetText(state.currentPreset).name : "";
     node.innerHTML = [
       `<strong>${escapeHtml(I18N.t("currentDataset"))}: ${escapeHtml(state.filename || presetName || "dataset")}</strong>`,
       `<span>${escapeHtml(I18N.t("sourceType"))}: ${escapeHtml(source)}${presetName ? ` - ${escapeHtml(presetName)}` : ""}</span>`,
       `<span>${escapeHtml(I18N.t("rows"))}: ${state.rows.length} | ${escapeHtml(I18N.t("columns"))}: ${state.columns.length}</span>`
     ].join("");
     node.classList.add("show");
+  }
+
+  function updateStatusBar() {
+    const datasetNode = $("statusDataset");
+    const taskNode = $("statusTask");
+    const modelNode = $("statusModel");
+    if (!datasetNode || !taskNode || !modelNode) return;
+    const datasetName = state.rows.length
+      ? (state.filename || (state.currentPreset ? datasetText(state.currentPreset).name : "dataset"))
+      : I18N.t("statusNoDataset");
+    const task = $("taskType") ? $("taskType").value : "regression";
+    const selectedModel = $("modelSelect") && $("modelSelect").selectedOptions[0]
+      ? $("modelSelect").selectedOptions[0].textContent
+      : I18N.t("statusNoModel");
+    const trained = state.modelBundle && state.modelBundle.model
+      ? ` / ${state.modelBundle.model.type}`
+      : "";
+    datasetNode.textContent = `${I18N.t("statusDataset")}: ${datasetName}`;
+    taskNode.textContent = `${I18N.t("statusTask")}: ${I18N.t(task)}`;
+    modelNode.textContent = `${I18N.t("statusModel")}: ${selectedModel}${trained}`;
   }
 
   function populateSelectors() {
@@ -547,6 +651,7 @@
       $("modelSelect").appendChild(option);
     });
     renderModelParams();
+    updateStatusBar();
   }
 
   function updateTaskUi() {
@@ -579,7 +684,22 @@
           <input class="model-param" data-param="${escapeHtml(param.key)}" type="number" min="${param.min}" max="${param.max}" step="${param.step}" value="${param.value}">
           <p class="param-help">${escapeHtml(I18N.t(param.help))}</p>
         </label>
-      `)
+      `),
+      `<div class="auto-tune-panel">
+        <label class="checkbox">
+          <input id="autoTuneEnabled" type="checkbox">
+          <span>${escapeHtml(I18N.t("autoTune"))}</span>
+        </label>
+        <label>
+          <span>${escapeHtml(I18N.t("autoTuneMethod"))}</span>
+          <select id="autoTuneMethod">
+            <option value="bayesian">${escapeHtml(I18N.t("bayesianTuning"))}</option>
+            <option value="grid">${escapeHtml(I18N.t("gridSearch"))}</option>
+          </select>
+        </label>
+        <p class="param-help">${escapeHtml(I18N.t("autoTuneHelp"))}</p>
+        <div id="autoTuneStatus" class="auto-tune-status"></div>
+      </div>`
     ].join("");
   }
 
@@ -681,8 +801,143 @@
       testSize: Utils.clamp(Number($("testSize").value) || 0.25, 0.05, 0.8),
       seed: Number($("seed").value) || 42,
       folds: Number($("folds").value) || 5,
-      modelParams: selectedModelParams()
+      modelParams: selectedModelParams(),
+      autoTune: Boolean($("autoTuneEnabled") && $("autoTuneEnabled").checked),
+      autoTuneMethod: $("autoTuneMethod") ? $("autoTuneMethod").value : "bayesian"
     };
+  }
+
+  function setAutoTuneStatus(message) {
+    const node = $("autoTuneStatus");
+    if (node) node.textContent = message || "";
+  }
+
+  function updateModelParamInputs(params) {
+    Object.entries(params || {}).forEach(([key, value]) => {
+      const input = document.querySelector(`.model-param[data-param="${cssEscape(key)}"]`);
+      if (!input) return;
+      input.value = Number.isInteger(value) ? String(value) : String(Number(value.toFixed ? value.toFixed(9) : value));
+    });
+  }
+
+  function normalizeModelParams(modelName, params) {
+    const definitions = modelParamDefinitions[modelName] || [];
+    const normalized = {};
+    definitions.forEach((definition) => {
+      const raw = params && params[definition.key] !== undefined ? Number(params[definition.key]) : definition.value;
+      const clamped = Utils.clamp(Number.isFinite(raw) ? raw : definition.value, definition.min, definition.max);
+      normalized[definition.key] = definition.step >= 1 ? Math.round(clamped) : clamped;
+    });
+    return normalized;
+  }
+
+  function candidateParamSets(modelName, method, currentParams, seed) {
+    const space = tuningSearchSpaces[modelName] || {};
+    const keys = Object.keys(space);
+    const base = normalizeModelParams(modelName, currentParams);
+    if (!keys.length) return [base];
+    const candidates = [base];
+    const addCandidate = (params) => {
+      const normalized = normalizeModelParams(modelName, { ...base, ...params });
+      const signature = JSON.stringify(normalized);
+      if (!candidates.some((item) => JSON.stringify(item) === signature)) candidates.push(normalized);
+    };
+    if (method === "grid") {
+      keys.reduce((sets, key) => sets.flatMap((set) => space[key].map((value) => ({ ...set, [key]: value }))), [{}])
+        .slice(0, 48)
+        .forEach(addCandidate);
+      return candidates;
+    }
+    const rand = Utils.seededRandom(seed || 42);
+    for (let i = 0; i < 14; i++) {
+      const params = {};
+      keys.forEach((key) => {
+        const values = space[key];
+        params[key] = values[Math.floor(rand() * values.length)];
+      });
+      addCandidate(params);
+    }
+    keys.forEach((key) => {
+      const values = space[key];
+      values.forEach((value) => addCandidate({ [key]: value }));
+    });
+    return candidates.slice(0, 24);
+  }
+
+  function distanceForTuning(a, b) {
+    let sum = 0;
+    for (let i = 0; i < a.length; i++) {
+      const d = a[i] - b[i];
+      sum += d * d;
+    }
+    return Math.sqrt(sum);
+  }
+
+  function silhouetteScore(X, assignments) {
+    const valid = assignments.map((cluster, index) => ({ cluster, index })).filter((item) => item.cluster !== -1);
+    const labels = Utils.unique(valid.map((item) => item.cluster)).map(Number);
+    if (labels.length < 2 || valid.length < 3) return -1;
+    const byCluster = new Map(labels.map((label) => [label, valid.filter((item) => item.cluster === label).map((item) => item.index)]));
+    const scores = valid.map((item) => {
+      const same = byCluster.get(item.cluster).filter((index) => index !== item.index);
+      const a = same.length ? Utils.mean(same.map((index) => distanceForTuning(X[item.index], X[index]))) : 0;
+      const otherDistances = labels
+        .filter((label) => label !== item.cluster)
+        .map((label) => Utils.mean(byCluster.get(label).map((index) => distanceForTuning(X[item.index], X[index]))));
+      const b = Math.min(...otherDistances);
+      const denom = Math.max(a, b);
+      return denom ? (b - a) / denom : 0;
+    });
+    const noisePenalty = assignments.filter((cluster) => cluster === -1).length / Math.max(1, assignments.length);
+    return Utils.mean(scores) - noisePenalty * 0.25;
+  }
+
+  function scoreCandidate(task, modelName, rows, features, targets, baseOpts, modelParams) {
+    const opts = { ...baseOpts, modelParams };
+    if (task === "clustering") {
+      if (rows.length < 3) return -Infinity;
+      const pre = TabularData.buildPreprocessor(rows, features, opts);
+      const X = TabularData.transformRows(rows, pre);
+      const model = ML.train(task, modelName, X, null, { seed: opts.seed, modelParams });
+      return silhouetteScore(X, model.assignments || []);
+    }
+    const split = TabularData.splitRows(rows, Math.max(0.2, opts.testSize || 0.25), opts.seed + 19);
+    if (split.train.length < 2 || split.test.length < 1) return -Infinity;
+    const pre = TabularData.buildPreprocessor(split.train, features, opts);
+    const XTrain = TabularData.transformRows(split.train, pre);
+    const XTest = TabularData.transformRows(split.test, pre);
+    const scores = targets.map((targetName) => {
+      if (task === "regression") {
+        const yTrain = split.train.map((row) => Utils.toNumber(row[targetName]));
+        const yTest = split.test.map((row) => Utils.toNumber(row[targetName]));
+        const model = ML.train(task, modelName, XTrain, yTrain, { seed: opts.seed, modelParams });
+        const predicted = XTest.map((row) => model.predict(row));
+        return ML.regressionMetrics(yTest, predicted).R2;
+      }
+      const targetPack = TabularData.getTarget(split.train, targetName, task);
+      const yTest = split.test.map((row) => targetPack.labelToIndex.get(String(row[targetName])));
+      const valid = yTest.map((v, i) => ({ v, i })).filter((item) => item.v !== undefined);
+      if (!valid.length || targetPack.labels.length < 2) return -Infinity;
+      const model = ML.train(task, modelName, XTrain, targetPack.y, { labels: targetPack.labels, seed: opts.seed, modelParams });
+      const predicted = valid.map((item) => model.predict(XTest[item.i]));
+      return ML.classificationMetrics(valid.map((item) => item.v), predicted, targetPack.labels).Accuracy;
+    });
+    const finite = scores.filter(Number.isFinite);
+    return finite.length ? Utils.mean(finite) : -Infinity;
+  }
+
+  function autoTuneModel(task, modelName, rows, features, targets, opts) {
+    const candidates = candidateParamSets(modelName, opts.autoTuneMethod, opts.modelParams, opts.seed);
+    let best = { params: normalizeModelParams(modelName, opts.modelParams), score: -Infinity };
+    candidates.forEach((params) => {
+      try {
+        const score = scoreCandidate(task, modelName, rows, features, targets, opts, params);
+        if (Number.isFinite(score) && score > best.score) best = { params, score };
+      } catch (error) {
+        console.warn("Auto tuning candidate failed", modelName, params, error);
+      }
+    });
+    return { ...best, candidates: candidates.length, method: opts.autoTuneMethod };
   }
 
   function runAnalysis() {
@@ -704,6 +959,25 @@
     const usableRows = task === "clustering"
       ? state.rows
       : state.rows.filter((row) => targets.every((name) => task === "regression" ? Number.isFinite(Utils.toNumber(row[name])) : !Utils.isMissing(row[name])));
+    if (opts.autoTune) {
+      const confirmed = window.confirm(I18N.t("autoTuneConfirm"));
+      if (confirmed) {
+        setAutoTuneStatus(I18N.t("autoTuningRunning"));
+        const tuning = autoTuneModel(task, $("modelSelect").value, usableRows, features, targets, opts);
+        if (Number.isFinite(tuning.score)) {
+          updateModelParamInputs(tuning.params);
+          opts.modelParams = selectedModelParams();
+          opts.tuning = tuning;
+          setAutoTuneStatus(`${I18N.t("autoTuneDone")}: ${formatParams(tuning.params)} | ${I18N.t("score")}: ${Utils.formatNumber(tuning.score, 4)}`);
+          Utils.toast(I18N.t("autoTuneDone"));
+        } else {
+          setAutoTuneStatus(I18N.t("autoTuneNoResult"));
+          Utils.toast(I18N.t("autoTuneNoResult"));
+        }
+      } else {
+        setAutoTuneStatus(I18N.t("autoTuneSkipped"));
+      }
+    }
     const split = task === "clustering" ? { train: usableRows, test: [] } : TabularData.splitRows(usableRows, opts.testSize, opts.seed);
     const splitInfo = {
       totalRows: usableRows.length,
@@ -783,6 +1057,7 @@
     populateResultTargets();
     drawResultChart();
     activateTab("results");
+    updateStatusBar();
     Utils.toast(I18N.t("trained"));
   }
 
@@ -935,6 +1210,12 @@
     if (task === "classification") return targetBundle.labels[raw];
     if (task === "clustering") return raw;
     return Utils.formatNumber(raw, 6);
+  }
+
+  function formatParams(params) {
+    return Object.entries(params || {})
+      .map(([key, value]) => `${key}=${Number.isFinite(Number(value)) ? Utils.formatNumber(Number(value), 6) : value}`)
+      .join(", ");
   }
 
   function buildCvPredictionRows(rows, targets, cv) {
@@ -1524,6 +1805,8 @@
       features: state.modelBundle.features,
       splitInfo: state.modelBundle.splitInfo,
       evaluationMode: state.modelBundle.evaluationMode,
+      modelParams: state.modelBundle.opts.modelParams,
+      tuning: state.modelBundle.opts.tuning || null,
       metricMeaning: state.modelBundle.evaluationMode === "cross_validation_oof"
         ? "Reported metrics and prediction plots use concatenated out-of-fold predictions from all cross-validation validation folds, so every usable row is evaluated once as validation data."
         : (state.modelBundle.task === "clustering" ? "Clustering metrics are computed on the full selected dataset." : "Reported test metrics are computed only on the held-out test set."),
@@ -1596,6 +1879,10 @@
     lines.push(`Target: ${bundle.task === "clustering" ? I18N.t("clusteringNoTarget") : (bundle.targets || [bundle.target]).join(", ")}`);
     lines.push(`${I18N.t("featureCount")}: ${bundle.features.length}`);
     lines.push(`${I18N.t("encodedFeatures")}: ${bundle.preprocessor.featureNames.length}`);
+    lines.push(`Current parameters: ${formatParams(bundle.opts.modelParams)}`);
+    if (bundle.opts.tuning) {
+      lines.push(`Auto tuning: ${bundle.opts.tuning.method}; candidates=${bundle.opts.tuning.candidates}; score=${Utils.formatNumber(bundle.opts.tuning.score, 6)}`);
+    }
     if (bundle.splitInfo && bundle.evaluationMode === "cross_validation_oof") {
       const firstTarget = (bundle.targets || [bundle.target])[0];
       const cvPack = bundle.cv && bundle.cv[firstTarget];

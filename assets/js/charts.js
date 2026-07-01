@@ -449,18 +449,22 @@
 
   function drawTicks(ctx, min, max, x1, y1, x2, y2, vertical) {
     const style = ctx.__style || DEFAULT_STYLE;
+    const previousAlign = ctx.textAlign;
     ctx.fillStyle = style.mutedColor;
     ctx.font = font(600, style.tickSize, style);
     for (let i = 0; i <= 4; i++) {
       const value = min + ((max - min) * i) / 4;
       if (vertical) {
         const y = y1 - ((y1 - y2) * i) / 4;
-        ctx.fillText(Utils.formatNumber(value, 2), Math.max(8, 40 - style.yTickOffset), y + 4);
+        ctx.textAlign = "right";
+        ctx.fillText(Utils.formatNumber(value, 2), Math.max(8, x1 - style.yTickOffset), y + 4);
       } else {
         const x = x1 + ((x2 - x1) * i) / 4;
+        ctx.textAlign = "left";
         ctx.fillText(Utils.formatNumber(value, 2), x - 16, y1 + style.xTickOffset);
       }
     }
+    ctx.textAlign = previousAlign || "left";
   }
 
   function drawAngledText(ctx, text, x, y, angle) {
@@ -579,6 +583,7 @@
     this.lineWidth = 1;
     this.globalAlpha = 1;
     this.font = "16px Arial, sans-serif";
+    this.textAlign = "left";
     this.lineDash = [];
   }
 
@@ -590,6 +595,7 @@
       lineWidth: this.lineWidth,
       globalAlpha: this.globalAlpha,
       font: this.font,
+      textAlign: this.textAlign,
       lineDash: this.lineDash.slice(),
       transforms: this.transforms.slice()
     });
@@ -640,7 +646,8 @@
   };
   SvgContext.prototype.fillText = function (text, x, y) {
     const parsed = parseFont(this.font);
-    this.nodes.push(`<text x="${num(x)}" y="${num(y)}" fill="${escapeAttr(this.fillStyle)}" font-family="${escapeAttr(parsed.family)}" font-size="${num(parsed.size)}" font-weight="${escapeAttr(parsed.weight)}"${styleAttrs(this, false)}>${escapeXml(text)}</text>`);
+    const anchor = this.textAlign === "right" ? "end" : (this.textAlign === "center" ? "middle" : "start");
+    this.nodes.push(`<text x="${num(x)}" y="${num(y)}" fill="${escapeAttr(this.fillStyle)}" font-family="${escapeAttr(parsed.family)}" font-size="${num(parsed.size)}" font-weight="${escapeAttr(parsed.weight)}" text-anchor="${anchor}"${styleAttrs(this, false)}>${escapeXml(text)}</text>`);
   };
   SvgContext.prototype.toSvg = function () {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${this.width}" height="${this.height}" viewBox="0 0 ${this.width} ${this.height}">${this.nodes.join("")}</svg>`;

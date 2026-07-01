@@ -54,6 +54,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  padding-bottom: 34px;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--surface) 82%, var(--bg)) 0, var(--bg) 260px),
     var(--bg);
@@ -390,20 +391,78 @@ body.is-resizing-sidebar {
   overflow: clip;
 }
 
+.sidebar > .panel {
+  gap: 0;
+}
+
 .panel.wide {
   box-shadow: var(--shadow-panel);
 }
 
-.panel h2 {
+.panel-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% + 30px);
+  margin: -15px -15px 0;
+  padding: 14px 15px;
+  border: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  box-shadow: none;
+}
+
+.panel-toggle:hover {
+  background: color-mix(in srgb, var(--accent-soft) 42%, transparent);
+  transform: none;
+}
+
+.panel-toggle::after {
+  content: "▾";
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 13px;
+  transition: transform 0.16s ease;
+}
+
+.panel.is-collapsed {
+  padding-bottom: 0;
+}
+
+.panel.is-collapsed .panel-toggle {
+  border-radius: var(--radius);
+}
+
+.panel.is-collapsed .panel-toggle::after {
+  transform: rotate(-90deg);
+}
+
+.panel-collapsible-content {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.panel.is-collapsed .panel-collapsible-content {
+  display: none;
+}
+
+.panel h2,
+.panel-toggle-title {
   margin: 0;
   font-size: 15px;
   letter-spacing: 0;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: 700;
 }
 
-.panel h2::before {
+.panel h2::before,
+.panel-toggle-title::before {
   content: "";
   width: 4px;
   height: 16px;
@@ -555,6 +614,20 @@ body.is-resizing-sidebar {
 .task-hint {
   margin: 0;
   color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.auto-tune-panel {
+  display: grid;
+  gap: 9px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.auto-tune-status {
+  min-height: 18px;
+  color: var(--accent-strong);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -998,7 +1071,7 @@ canvas {
 .toast {
   position: fixed;
   right: 18px;
-  bottom: 18px;
+  bottom: 52px;
   background: var(--text);
   color: var(--surface);
   padding: 12px 14px;
@@ -1010,6 +1083,32 @@ canvas {
   max-width: min(420px, calc(100vw - 36px));
   z-index: 10;
   box-shadow: var(--shadow);
+}
+
+.statusbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 34px;
+  padding: 6px 18px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  color: var(--muted);
+  font-size: 12px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 -8px 20px rgba(23, 33, 47, 0.05);
+}
+
+.statusbar span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 textarea,
@@ -1086,6 +1185,11 @@ input:disabled {
 
   .top-actions select {
     flex: 1;
+  }
+
+  .statusbar {
+    gap: 10px;
+    padding: 6px 10px;
   }
 
   .layout {
