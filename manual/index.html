@@ -1,25 +1,27 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TabularLab V1.1.0 User Manual</title>
     <style>
       :root {
-        --bg: #f3f5f7;
+        --bg: #f5f7f8;
         --surface: #ffffff;
-        --surface-2: #f7f9fb;
-        --surface-3: #eef3f6;
-        --text: #17212f;
-        --muted: #647184;
-        --line: #dce3ea;
-        --accent: #0f766e;
-        --accent-strong: #0b5f59;
-        --accent-soft: #e8f4f2;
+        --surface-2: #f8fafb;
+        --surface-3: #edf3f2;
+        --text: #18202c;
+        --muted: #627082;
+        --line: #d9e2e7;
+        --accent: #126b61;
+        --accent-strong: #0b4f49;
+        --accent-soft: #e7f3f0;
+        --accent-warm: #b85c38;
         --warning: #9a6b10;
         --danger: #b84d3a;
-        --shadow: 0 12px 28px rgba(23, 33, 47, 0.08);
-        --radius: 10px;
+        --shadow: 0 12px 30px rgba(24, 32, 44, 0.07);
+        --shadow-soft: 0 1px 2px rgba(24, 32, 44, 0.05);
+        --radius: 8px;
       }
 
       * {
@@ -39,10 +41,12 @@
 
       body {
         margin: 0;
-        background: linear-gradient(180deg, #ffffff 0, var(--bg) 260px);
+        background:
+          linear-gradient(180deg, #ffffff 0, #f9fbfb 220px, var(--bg) 520px),
+          var(--bg);
         color: var(--text);
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        line-height: 1.7;
+        line-height: 1.68;
         letter-spacing: 0;
         overflow-wrap: anywhere;
       }
@@ -80,11 +84,11 @@
         justify-content: space-between;
         align-items: center;
         gap: 18px;
-        padding: 14px 24px;
+        padding: 12px 28px;
         border-bottom: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.94);
-        backdrop-filter: blur(14px);
-        box-shadow: 0 8px 24px rgba(23, 33, 47, 0.06);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 8px 22px rgba(24, 32, 44, 0.05);
       }
 
       .brand {
@@ -95,19 +99,20 @@
       }
 
       .brand-mark {
-        width: 44px;
-        height: 44px;
+        width: 42px;
+        height: 42px;
         display: grid;
         place-items: center;
-        border-radius: 11px;
+        border-radius: 8px;
         background: var(--accent-strong);
         color: #fff;
         font-weight: 800;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
       }
 
       .brand h1 {
         margin: 0;
-        font-size: 22px;
+        font-size: 20px;
         line-height: 1.1;
       }
 
@@ -125,7 +130,7 @@
 
       .lang-btn,
       .nav-link {
-        min-height: 36px;
+        min-height: 34px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--surface);
@@ -143,33 +148,42 @@
         color: #fff;
       }
 
+      .nav-link {
+        background: var(--surface-2);
+      }
+
+      .nav-link:hover,
+      .lang-btn:hover {
+        border-color: color-mix(in srgb, var(--accent) 44%, var(--line));
+      }
+
       .layout {
         display: grid;
-        grid-template-columns: 300px minmax(0, 1fr);
-        gap: 22px;
-        width: min(1420px, 100%);
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 24px;
+        width: min(1360px, 100%);
         margin: 0 auto;
-        padding: 24px;
+        padding: 26px;
       }
 
       .toc {
         position: sticky;
-        top: 92px;
+        top: 82px;
         align-self: start;
         display: grid;
-        gap: 7px;
-        max-height: calc(100vh - 116px);
+        gap: 4px;
+        max-height: calc(100vh - 104px);
         overflow: auto;
-        padding: 16px;
+        padding: 14px;
         border: 1px solid var(--line);
         border-radius: var(--radius);
-        background: var(--surface);
-        box-shadow: var(--shadow);
+        background: color-mix(in srgb, var(--surface) 96%, var(--surface-2));
+        box-shadow: var(--shadow-soft);
       }
 
       .toc strong {
         display: block;
-        margin-bottom: 4px;
+        margin-bottom: 8px;
         font-size: 14px;
       }
 
@@ -178,10 +192,13 @@
         font-size: 13px;
         font-weight: 700;
         text-decoration: none;
+        padding: 7px 9px;
+        border-radius: 7px;
       }
 
       .toc a:hover {
         color: var(--accent);
+        background: var(--accent-soft);
       }
 
       .content {
@@ -199,24 +216,33 @@
         display: grid;
       }
 
+      #concepts,
+      #english-concepts {
+        order: 99;
+      }
+
       .hero,
       .section {
         border: 1px solid var(--line);
         border-radius: var(--radius);
         background: var(--surface);
-        box-shadow: var(--shadow);
-        padding: 24px;
+        box-shadow: var(--shadow-soft);
+        padding: 26px;
       }
 
       .hero {
         display: grid;
-        gap: 16px;
-        background: linear-gradient(180deg, var(--surface), var(--surface-2));
+        gap: 18px;
+        border-color: color-mix(in srgb, var(--accent) 22%, var(--line));
+        background:
+          linear-gradient(180deg, rgba(231, 243, 240, 0.72), rgba(255, 255, 255, 0.96)),
+          var(--surface);
       }
 
       .hero h2 {
         margin: 0;
-        font-size: clamp(28px, 4vw, 42px);
+        max-width: 980px;
+        font-size: clamp(32px, 4vw, 48px);
         line-height: 1.15;
       }
 
@@ -227,13 +253,15 @@
       }
 
       .section h3 {
-        margin: 0 0 10px;
-        font-size: 22px;
+        margin: 0 0 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+        font-size: 23px;
         line-height: 1.25;
       }
 
       .section h4 {
-        margin: 20px 0 8px;
+        margin: 22px 0 8px;
         font-size: 16px;
       }
 
@@ -259,7 +287,8 @@
         border: 1px solid var(--line);
         border-radius: var(--radius);
         background: var(--surface-2);
-        padding: 13px;
+        padding: 14px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
       }
 
       .meta-item strong,
@@ -283,10 +312,10 @@
       .step-card::before {
         content: attr(data-step);
         position: absolute;
-        left: 13px;
-        top: 13px;
-        width: 22px;
-        height: 22px;
+        left: 14px;
+        top: 14px;
+        width: 24px;
+        height: 24px;
         display: grid;
         place-items: center;
         border-radius: 50%;
@@ -324,23 +353,23 @@
 
       .figure {
         display: grid;
-        gap: 9px;
-        margin: 14px 0 4px;
+        gap: 10px;
+        margin: 16px 0 4px;
         justify-items: center;
       }
 
       .figure img {
         width: 100%;
-        max-width: 620px;
+        max-width: 760px;
         height: auto;
         border: 1px solid var(--line);
         border-radius: var(--radius);
         background: var(--surface);
-        box-shadow: 0 8px 22px rgba(23, 33, 47, 0.08);
+        box-shadow: var(--shadow);
       }
 
       .figure figcaption {
-        width: min(620px, 100%);
+        width: min(760px, 100%);
         color: var(--muted);
         font-size: 13px;
       }
@@ -350,6 +379,7 @@
         margin-top: 12px;
         border: 1px solid var(--line);
         border-radius: var(--radius);
+        background: var(--surface);
       }
 
       table {
@@ -369,6 +399,11 @@
 
       th {
         background: var(--surface-3);
+        color: var(--text);
+      }
+
+      tr:nth-child(even) td {
+        background: color-mix(in srgb, var(--surface-2) 72%, transparent);
       }
 
       .footer {
@@ -575,35 +610,34 @@
         </div>
       </div>
       <div class="actions">
-        <button class="lang-btn active" data-lang="zh">中文</button>
-        <button class="lang-btn" data-lang="en">English</button>
-        <a class="nav-link" href="https://github.com/Bin-Cao/TabularLab/releases" target="_blank" rel="noreferrer">下载软件</a>
+        <button class="lang-btn active" data-lang="en">English</button>
+        <button class="lang-btn" data-lang="zh">中文</button>
+        <a class="nav-link" data-nav="download" href="https://github.com/Bin-Cao/TabularLab/releases" target="_blank" rel="noreferrer">Download</a>
         <a class="nav-link" href="https://github.com/bin-cao/TabularLab" target="_blank" rel="noreferrer">GitHub</a>
       </div>
     </header>
 
     <main class="layout">
       <aside class="toc">
-        <strong>目录 / Contents</strong>
-        <a href="#intro">1. 软件是什么</a>
-        <a href="#quick-start">2. 快速开始</a>
-        <a href="#concepts">3. 新手必懂概念</a>
-        <a href="#workflow">4. 完整工作流</a>
-        <a href="#data-source">5. 数据源</a>
-        <a href="#task-setup">6. 任务设置</a>
-        <a href="#column-roles">7. 字段角色</a>
-        <a href="#training">8. 处理与训练</a>
-        <a href="#results">9. 结果解读</a>
-        <a href="#plots">10. 图表和导出</a>
-        <a href="#predict">11. 预测</a>
-        <a href="#preview">12. 数据预览</a>
-        <a href="#export">13. 导出与引用</a>
-        <a href="#faq">14. 常见问题</a>
-        <a href="#english">English guide</a>
+        <strong data-toc-title>Contents</strong>
+        <a href="#english" data-toc="intro">1. What this app does</a>
+        <a href="#english-quick-start" data-toc="quick">2. Quick Start</a>
+        <a href="#english-workflow" data-toc="workflow">3. Full workflow</a>
+        <a href="#english-data-source" data-toc="data">4. Data Source</a>
+        <a href="#english-task-setup" data-toc="task">5. Task Setup</a>
+        <a href="#english-column-roles" data-toc="roles">6. Column Roles</a>
+        <a href="#english-training" data-toc="training">7. Processing & Training</a>
+        <a href="#english-results" data-toc="results">8. Results</a>
+        <a href="#english-plots" data-toc="plots">9. Charts and export</a>
+        <a href="#english-predict" data-toc="predict">10. Prediction</a>
+        <a href="#english-preview" data-toc="preview">11. Data Preview</a>
+        <a href="#english-export" data-toc="export">12. Export and citation</a>
+        <a href="#english-faq" data-toc="faq">13. FAQ</a>
+        <a href="#english-concepts" data-toc="concepts">Appendix: ML Basics</a>
       </aside>
 
       <section class="content">
-        <article class="manual active" id="manual-zh">
+        <article class="manual" id="manual-zh">
           <section class="hero" id="intro">
             <h2>TabularLab V1.1.0 中文操作说明书</h2>
             <p>这份说明书面向第一次接触机器学习工具的用户。你不需要会写代码，只要准备一张表格，按照“导入数据、选择任务、设置字段、训练模型、查看结果、导出图表、进行预测”的顺序操作，就可以完成一次本地表格机器学习分析。</p>
@@ -618,7 +652,7 @@
               </div>
               <div class="meta-item">
                 <strong>作者</strong>
-                <span>Dr. Bin Cao / 曹斌</span>
+                <span><a href="https://bin-cao.github.io/" target="_blank" rel="noreferrer">Dr. Bin Cao / 曹斌</a></span>
               </div>
               <div class="meta-item">
                 <strong>下载地址</strong>
@@ -667,42 +701,87 @@
           </section>
 
           <section class="section" id="concepts">
-            <h3>3. 新手必懂概念</h3>
-            <p>机器学习不一定复杂。对 TabularLab 来说，你只需要理解下面几个词。</p>
+            <h3>附录：机器学习基础概念（初学者阅读）</h3>
+            <p>机器学习可以理解为：让软件从已有表格中学习“输入”和“答案”之间的关系，然后把这个关系用于新样本。TabularLab 面向的是表格机器学习，也就是每一行是一条样本、每一列是一种信息。</p>
             <div class="term-grid">
               <div class="term-item">
-                <strong>行</strong>
-                <p>一行是一条样本。例如一个材料、一条实验记录、一个学生、一件产品。</p>
+                <strong>样本 / 行</strong>
+                <p>一行是一条样本。例如一个材料、一条实验记录、一个学生、一件产品。模型会从很多行样本中学习规律。</p>
               </div>
               <div class="term-item">
-                <strong>列</strong>
-                <p>一列是一种信息。例如密度、温度、工艺、类别、强度、是否合格。</p>
+                <strong>变量 / 列</strong>
+                <p>一列是一种信息。例如密度、温度、工艺、类别、强度、是否合格。列名应该清楚、稳定，不要用合并单元格。</p>
               </div>
               <div class="term-item">
                 <strong>特征列</strong>
-                <p>模型用来学习的输入信息。例如成分、处理温度、晶粒尺寸、材料族。</p>
+                <p>特征是模型的输入，也就是用来判断答案的信息。例如成分、处理温度、晶粒尺寸、材料族、工艺路线。</p>
               </div>
               <div class="term-item">
                 <strong>目标列</strong>
-                <p>你希望模型预测的答案。例如屈服强度、材料类别、是否在热处理窗口内。</p>
+                <p>目标是你希望模型预测的答案。例如屈服强度、材料类别、是否在热处理窗口内。回归和分类需要目标列，聚类不需要。</p>
               </div>
               <div class="term-item">
-                <strong>回归</strong>
-                <p>预测一个连续数值。例：预测强度、容量、价格、温度。</p>
+                <strong>训练</strong>
+                <p>训练就是让模型看已有数据，调整内部参数，让预测结果尽量接近真实答案。训练不是记住表格，而是学习可推广的规律。</p>
               </div>
               <div class="term-item">
-                <strong>分类</strong>
-                <p>预测一个类别标签。例：预测材料类别、合格/不合格、低/中/高等级。</p>
-              </div>
-              <div class="term-item">
-                <strong>聚类</strong>
-                <p>没有目标列，让软件根据特征自动把样本分成几组。</p>
+                <strong>预测</strong>
+                <p>预测是把新样本的特征输入训练好的模型，让模型输出目标值、类别或簇编号。新样本必须包含训练时使用的特征列。</p>
               </div>
               <div class="term-item">
                 <strong>训练集 / 测试集</strong>
-                <p>训练集用于学习规律，测试集用于检查模型在没见过的数据上表现如何。</p>
+                <p>训练集用于学习规律；测试集暂时不让模型看到，用来检查模型对新数据的表现。测试集指标比训练集指标更接近真实使用效果。</p>
+              </div>
+              <div class="term-item">
+                <strong>交叉验证</strong>
+                <p>K 折交叉验证会轮流用一部分数据做验证，其余数据训练。TabularLab 的 OOF 评估会把每一折验证预测拼接起来，让每条样本都被验证一次。</p>
+              </div>
+              <div class="term-item">
+                <strong>回归</strong>
+                <p>回归预测连续数值。例：强度、容量、价格、温度。常看 R2、RMSE、MAE；R2 越高通常越好，RMSE/MAE 越低通常越好。</p>
+              </div>
+              <div class="term-item">
+                <strong>分类</strong>
+                <p>分类预测类别标签。例：材料类别、合格/不合格、低/中/高等级。常看 Accuracy、Precision、Recall、F1 和混淆矩阵。</p>
+              </div>
+              <div class="term-item">
+                <strong>聚类</strong>
+                <p>聚类没有标准答案，模型会根据特征相似性自动把样本分组。它适合探索材料族、发现异常样本或观察数据结构。</p>
+              </div>
+              <div class="term-item">
+                <strong>过拟合</strong>
+                <p>过拟合是模型把训练数据细节甚至噪声学得太死，训练效果很好，但新数据效果差。降低模型复杂度、增加数据、交叉验证都能帮助发现过拟合。</p>
               </div>
             </div>
+            <h4>TabularLab 中用到的主要算法</h4>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>算法</th><th>适用任务</th><th>直观理解</th><th>什么时候适合</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Linear / Ridge / Lasso / ElasticNet</td><td>回归</td><td>用一组加权公式把特征组合成数值预测。</td><td>想要速度快、可解释、作为基线模型时。</td></tr>
+                  <tr><td>Linear SVR / Linear SVM</td><td>回归 / 分类</td><td>寻找能稳定分开样本或减少预测误差的线性边界。</td><td>特征较多、关系近似线性时。</td></tr>
+                  <tr><td>Decision Tree</td><td>回归 / 分类</td><td>像流程图一样不断问“某列是否大于某个值”。</td><td>希望模型容易解释，但要注意过拟合。</td></tr>
+                  <tr><td>Random Forest</td><td>回归 / 分类</td><td>训练很多棵树，再投票或平均。</td><td>通用、稳健，适合很多非线性表格问题。</td></tr>
+                  <tr><td>Gradient Boosting</td><td>回归</td><td>一轮一轮修正前面模型的错误。</td><td>需要较强拟合能力，且愿意调参时。</td></tr>
+                  <tr><td>KNN</td><td>回归 / 分类</td><td>找最相似的 K 个样本，用它们的答案做预测。</td><td>数据量不大、相似样本确实有相似结果时。</td></tr>
+                  <tr><td>Softmax Logistic</td><td>分类</td><td>给每个类别计算概率，选择概率最高的类别。</td><td>多分类基线、需要快速稳定结果时。</td></tr>
+                  <tr><td>Gaussian Naive Bayes</td><td>分类</td><td>估计各类别下特征分布，再判断新样本最像哪一类。</td><td>需要非常快的分类基线时。</td></tr>
+                  <tr><td>KMeans</td><td>聚类</td><td>把样本分成 K 组，每组围绕一个中心。</td><td>你大致知道要分几类，且簇比较圆/集中时。</td></tr>
+                  <tr><td>DBSCAN</td><td>聚类</td><td>按样本密度成团，孤立点会标为噪声。</td><td>想发现异常点，或簇形状不规则时。</td></tr>
+                  <tr><td>Agglomerative</td><td>聚类</td><td>从每个样本单独成组开始，逐步合并相近组。</td><td>希望观察层次式分组关系时。</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h4>初学者推荐判断顺序</h4>
+            <ol>
+              <li>先问自己：我要预测数值、预测类别，还是只是自动分组？这决定回归、分类或聚类。</li>
+              <li>再确认目标列有没有被误选为特征。答案列不能作为输入，否则指标会虚高。</li>
+              <li>先用默认模型跑通流程，再比较 2-3 个模型，不要一开始就过度调参。</li>
+              <li>优先看测试集或交叉验证结果，不要只看训练过程或单个漂亮图。</li>
+              <li>如果指标很差，先检查数据质量、目标列、特征列和缺失值，而不是马上换复杂模型。</li>
+            </ol>
             <div class="callout warning">
               <strong>不要把编号当成特征</strong>
               <p>样本编号、实验编号、随机 ID 通常不代表真实规律。如果把它们作为特征，模型可能学到无意义的编号关系。</p>
@@ -710,7 +789,7 @@
           </section>
 
           <section class="section" id="workflow">
-            <h3>4. TabularLab 的完整工作流</h3>
+            <h3>3. TabularLab 的完整工作流</h3>
             <ol>
               <li>准备表格：CSV、TSV、TXT、XLSX 或 XLS。</li>
               <li>导入数据：上传文件或加载示例数据。</li>
@@ -726,7 +805,7 @@
           </section>
 
           <section class="section" id="data-source">
-            <h3>5. 数据源：导入自己的表格或示例数据</h3>
+            <h3>4. 数据源：导入自己的表格或示例数据</h3>
             <figure class="figure">
               <img src="../docs/Data%20Source.png" alt="Data Source">
               <figcaption>图 2：数据源面板。这里决定后续分析使用哪张表。</figcaption>
@@ -756,7 +835,7 @@
           </section>
 
           <section class="section" id="task-setup">
-            <h3>6. 任务设置：决定你要解决什么问题</h3>
+            <h3>5. 任务设置：决定你要解决什么问题</h3>
             <figure class="figure">
               <img src="../docs/Task%20Setup.png" alt="Task Setup">
               <figcaption>图 3：任务设置面板。这里选择任务类型、目标列和特征列。</figcaption>
@@ -780,7 +859,7 @@
           </section>
 
           <section class="section" id="column-roles">
-            <h3>7. 字段角色：逐列确认特征、目标、忽略</h3>
+            <h3>6. 字段角色：逐列确认特征、目标、忽略</h3>
             <figure class="figure">
               <img src="../docs/Column%20Roles.png" alt="Column Roles">
               <figcaption>图 4：字段角色表。每一列只能选择一种角色。</figcaption>
@@ -797,7 +876,7 @@
           </section>
 
           <section class="section" id="training">
-            <h3>8. 处理与训练：清洗数据并训练模型</h3>
+            <h3>7. 处理与训练：清洗数据并训练模型</h3>
             <figure class="figure">
               <img src="../docs/Processing%20%26%20Training.png" alt="Processing and Training">
               <figcaption>图 5：处理与训练面板。这里控制缺失值、编码、模型和训练参数。</figcaption>
@@ -831,7 +910,7 @@
           </section>
 
           <section class="section" id="results">
-            <h3>9. 结果解读：不要只看一个数字</h3>
+            <h3>8. 结果解读：不要只看一个数字</h3>
             <figure class="figure">
               <img src="../docs/Results.png" alt="Results">
               <figcaption>图 6：结果页。包含评估模式说明、结果总结、指标卡、模型输出和结果分析图。</figcaption>
@@ -860,7 +939,7 @@
           </section>
 
           <section class="section" id="plots">
-            <h3>10. 图表和导出：把图直接用于论文或报告</h3>
+            <h3>9. 图表和导出：把图直接用于论文或报告</h3>
             <figure class="figure">
               <img src="../docs/Results%20Plot.png" alt="Results Plot">
               <figcaption>图 7：结果分析图。回归、分类、聚类会显示不同图和不同参数设置。</figcaption>
@@ -891,7 +970,7 @@
           </section>
 
           <section class="section" id="predict">
-            <h3>11. 预测：用训练好的模型预测新样本</h3>
+            <h3>10. 预测：用训练好的模型预测新样本</h3>
             <figure class="figure">
               <img src="../docs/Predict.png" alt="Predict">
               <figcaption>图 8：预测页。可以输入单条样本，也可以上传文件批量预测。</figcaption>
@@ -917,7 +996,7 @@
           </section>
 
           <section class="section" id="preview">
-            <h3>12. 数据预览和处理后数据</h3>
+            <h3>11. 数据预览和处理后数据</h3>
             <figure class="figure">
               <img src="../docs/Preview.png" alt="Preview">
               <figcaption>图 9：数据预览。用于检查导入数据是否读取正确。</figcaption>
@@ -934,7 +1013,7 @@
           </section>
 
           <section class="section" id="export">
-            <h3>13. 导出、保存和引用</h3>
+            <h3>12. 导出、保存和引用</h3>
             <h4>可以导出的内容</h4>
             <ul>
               <li><strong>图表：</strong>PNG 或 SVG。</li>
@@ -957,7 +1036,7 @@
           </section>
 
           <section class="section" id="faq">
-            <h3>14. 常见问题和排错</h3>
+            <h3>13. 常见问题和排错</h3>
             <h4>为什么运行按钮没有效果？</h4>
             <ul>
               <li>确认已经加载数据。</li>
@@ -980,13 +1059,13 @@
           </section>
         </article>
 
-        <article class="manual" id="manual-en">
+        <article class="manual active" id="manual-en">
           <section class="hero" id="english">
             <h2>TabularLab V1.1.0 English User Manual</h2>
             <p>This manual is written for beginners. You do not need to write code. Prepare a spreadsheet, then follow the workflow: import data, choose a task, define column roles, train a model, read results, export figures, and make predictions.</p>
             <div class="meta-grid">
               <div class="meta-item"><strong>Version</strong><span>V1.1.0, released on 2026-07-01</span></div>
-              <div class="meta-item"><strong>Author</strong><span>Dr. Bin Cao / 曹斌</span></div>
+              <div class="meta-item"><strong>Author</strong><span><a href="https://bin-cao.github.io/" target="_blank" rel="noreferrer">Dr. Bin Cao / 曹斌</a></span></div>
               <div class="meta-item"><strong>Repository</strong><span><a href="https://github.com/bin-cao/TabularLab" target="_blank" rel="noreferrer">github.com/bin-cao/TabularLab</a></span></div>
               <div class="meta-item"><strong>Download</strong><span><a href="https://github.com/Bin-Cao/TabularLab/releases" target="_blank" rel="noreferrer">Windows / macOS release page</a></span></div>
             </div>
@@ -996,7 +1075,7 @@
             </div>
           </section>
 
-          <section class="section">
+          <section class="section" id="english-quick-start">
             <h3>2. Quick Start: run one analysis in about five minutes</h3>
             <p>If you do not have your own data yet, start with a built-in sample dataset.</p>
             <div class="workflow-grid">
@@ -1013,27 +1092,60 @@
             </figure>
           </section>
 
-          <section class="section">
-            <h3>3. Basic concepts for beginners</h3>
-            <p>A tabular machine learning dataset is made of rows and columns. Each row is one sample. Each column is one type of information.</p>
+          <section class="section" id="english-concepts">
+            <h3>Appendix: Machine Learning Basics for Beginners</h3>
+            <p>Machine learning means learning a relationship from existing examples, then applying that relationship to new samples. In TabularLab, the examples are rows in a table, and the information used by the model is stored in columns.</p>
             <div class="term-grid">
-              <div class="term-item"><strong>Row</strong><p>One sample, such as one material, experiment record, student, or product.</p></div>
-              <div class="term-item"><strong>Column</strong><p>One variable, such as density, temperature, process route, class label, or strength.</p></div>
-              <div class="term-item"><strong>Feature column</strong><p>Input information used by the model to learn patterns.</p></div>
-              <div class="term-item"><strong>Target column</strong><p>The answer you want the model to predict.</p></div>
-              <div class="term-item"><strong>Regression</strong><p>Predict a continuous number, such as strength, capacity, price, or temperature.</p></div>
-              <div class="term-item"><strong>Classification</strong><p>Predict a category, such as material class, pass/fail, or low/medium/high.</p></div>
-              <div class="term-item"><strong>Clustering</strong><p>Group rows automatically without a target column.</p></div>
-              <div class="term-item"><strong>Train/test split</strong><p>Training rows fit the model; test rows evaluate performance on unseen data.</p></div>
+              <div class="term-item"><strong>Sample / row</strong><p>One row is one sample, such as one material, experiment record, student, or product. The model learns from many rows.</p></div>
+              <div class="term-item"><strong>Variable / column</strong><p>One column is one type of information, such as density, temperature, process route, class label, or strength.</p></div>
+              <div class="term-item"><strong>Feature column</strong><p>A feature is an input used by the model, such as composition, treatment temperature, grain size, material family, or process route.</p></div>
+              <div class="term-item"><strong>Target column</strong><p>The target is the answer you want to predict. Regression and classification need target columns; clustering does not.</p></div>
+              <div class="term-item"><strong>Training</strong><p>Training adjusts a model so its predictions match known answers. The goal is not memorization, but a pattern that works on new data.</p></div>
+              <div class="term-item"><strong>Prediction</strong><p>Prediction applies a trained model to a new sample. The new table must contain the same feature columns used during training.</p></div>
+              <div class="term-item"><strong>Train/test split</strong><p>Training rows fit the model. Test rows are hidden during training and used to estimate performance on unseen data.</p></div>
+              <div class="term-item"><strong>Cross validation</strong><p>K-fold cross validation repeatedly trains on K-1 folds and validates on the held-out fold. TabularLab reports OOF predictions by combining all held-out predictions.</p></div>
+              <div class="term-item"><strong>Regression</strong><p>Regression predicts a continuous number, such as strength, capacity, price, or temperature. Common metrics include R2, RMSE, and MAE.</p></div>
+              <div class="term-item"><strong>Classification</strong><p>Classification predicts a category, such as material class, pass/fail, or low/medium/high. Common outputs include accuracy, F1, and a confusion matrix.</p></div>
+              <div class="term-item"><strong>Clustering</strong><p>Clustering groups samples without known answers. It is useful for exploration, family discovery, and anomaly inspection.</p></div>
+              <div class="term-item"><strong>Overfitting</strong><p>Overfitting means a model fits training details or noise too closely, so it looks good on training data but performs poorly on new data.</p></div>
             </div>
+            <h4>Main algorithms used by TabularLab</h4>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Algorithm</th><th>Task</th><th>Plain-language idea</th><th>Good starting point when</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Linear / Ridge / Lasso / ElasticNet</td><td>Regression</td><td>Combine features with weights to predict a number.</td><td>You want a fast, interpretable baseline.</td></tr>
+                  <tr><td>Linear SVR / Linear SVM</td><td>Regression / Classification</td><td>Find a stable linear boundary or linear prediction rule.</td><td>You have many features and roughly linear behavior.</td></tr>
+                  <tr><td>Decision Tree</td><td>Regression / Classification</td><td>Ask a sequence of if/then questions about feature values.</td><td>You want an interpretable model, while watching for overfitting.</td></tr>
+                  <tr><td>Random Forest</td><td>Regression / Classification</td><td>Train many trees and average or vote their outputs.</td><td>You need a robust general-purpose tabular model.</td></tr>
+                  <tr><td>Gradient Boosting</td><td>Regression</td><td>Build models sequentially, each one correcting earlier errors.</td><td>You need stronger fitting power and can tune parameters.</td></tr>
+                  <tr><td>KNN</td><td>Regression / Classification</td><td>Find the K most similar samples and use their answers.</td><td>Your dataset is small and similar samples should have similar results.</td></tr>
+                  <tr><td>Softmax Logistic</td><td>Classification</td><td>Estimate class probabilities and choose the most likely class.</td><td>You need a fast multiclass baseline.</td></tr>
+                  <tr><td>Gaussian Naive Bayes</td><td>Classification</td><td>Estimate feature distributions for each class and pick the most likely class.</td><td>You need a very fast classification baseline.</td></tr>
+                  <tr><td>KMeans</td><td>Clustering</td><td>Split samples into K groups around cluster centers.</td><td>You roughly know the number of groups.</td></tr>
+                  <tr><td>DBSCAN</td><td>Clustering</td><td>Build clusters from dense regions and mark isolated points as noise.</td><td>You want anomaly detection or irregular cluster shapes.</td></tr>
+                  <tr><td>Agglomerative</td><td>Clustering</td><td>Start with one group per sample, then merge nearby groups step by step.</td><td>You want hierarchical grouping behavior.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h4>Beginner checklist</h4>
+            <ol>
+              <li>Decide whether you need to predict a number, predict a class, or discover groups.</li>
+              <li>Make sure answer-like columns are not selected as features.</li>
+              <li>Run a default model first, then compare a small number of alternatives.</li>
+              <li>Trust test-set or cross-validation results more than training impressions.</li>
+              <li>If metrics are poor, check data quality, target choice, features, and missing values before switching to a complex model.</li>
+            </ol>
             <div class="callout warning">
               <strong>Do not use IDs as features unless they carry meaning</strong>
               <p>Sample IDs, random IDs, and experiment numbers usually do not describe real patterns. Using them as features can make the model learn meaningless shortcuts.</p>
             </div>
           </section>
 
-          <section class="section">
-            <h3>4. Full workflow</h3>
+          <section class="section" id="english-workflow">
+            <h3>3. Full workflow</h3>
             <ol>
               <li>Prepare a clean table in CSV, TSV, TXT, XLSX, or XLS format.</li>
               <li>Import the table or load a built-in sample dataset.</li>
@@ -1048,8 +1160,8 @@
             </ol>
           </section>
 
-          <section class="section">
-            <h3>5. Data Source: import your own table or sample data</h3>
+          <section class="section" id="english-data-source">
+            <h3>4. Data Source: import your own table or sample data</h3>
             <figure class="figure">
               <img src="../docs/Data%20Source.png" alt="Data Source">
               <figcaption>Figure 2: Data Source panel. This panel decides which table is used for the analysis.</figcaption>
@@ -1072,8 +1184,8 @@
             </div>
           </section>
 
-          <section class="section">
-            <h3>6. Task Setup: define your question</h3>
+          <section class="section" id="english-task-setup">
+            <h3>5. Task Setup: define your question</h3>
             <figure class="figure">
               <img src="../docs/Task%20Setup.png" alt="Task Setup">
               <figcaption>Figure 3: Task Setup panel. Choose task type, target columns, and feature columns.</figcaption>
@@ -1093,8 +1205,8 @@
             <p>The target is the answer you want to predict. Features are the input columns used to make that prediction. For clustering, there is no target column.</p>
           </section>
 
-          <section class="section">
-            <h3>7. Column Roles: feature, target, or ignored</h3>
+          <section class="section" id="english-column-roles">
+            <h3>6. Column Roles: feature, target, or ignored</h3>
             <figure class="figure">
               <img src="../docs/Column%20Roles.png" alt="Column Roles">
               <figcaption>Figure 4: Column Roles table. Each column should have exactly one role.</figcaption>
@@ -1110,8 +1222,8 @@
             </div>
           </section>
 
-          <section class="section">
-            <h3>8. Processing & Training: clean data and train a model</h3>
+          <section class="section" id="english-training">
+            <h3>7. Processing & Training: clean data and train a model</h3>
             <figure class="figure">
               <img src="../docs/Processing%20%26%20Training.png" alt="Processing and Training">
               <figcaption>Figure 5: Processing & Training panel. Configure missing values, encoding, model, and validation settings.</figcaption>
@@ -1136,8 +1248,8 @@
             <p>Use train/test split for a simple evaluation. Use cross-validation OOF evaluation when you want a more stable estimate across all usable rows.</p>
           </section>
 
-          <section class="section">
-            <h3>9. Results: read more than one number</h3>
+          <section class="section" id="english-results">
+            <h3>8. Results: read more than one number</h3>
             <figure class="figure">
               <img src="../docs/Results.png" alt="Results">
               <figcaption>Figure 6: Results tab. It contains evaluation mode, summary report, metric cards, logs, and result plots.</figcaption>
@@ -1165,8 +1277,8 @@
             </ul>
           </section>
 
-          <section class="section">
-            <h3>10. Charts and export</h3>
+          <section class="section" id="english-plots">
+            <h3>9. Charts and export</h3>
             <figure class="figure">
               <img src="../docs/Results%20Plot.png" alt="Results Plot">
               <figcaption>Figure 7: Result analysis plot. Different tasks show different plots and parameter controls.</figcaption>
@@ -1189,8 +1301,8 @@
             <p>Use PNG for quick reports and slides. Use SVG for papers because it is a vector format and remains sharp when resized.</p>
           </section>
 
-          <section class="section">
-            <h3>11. Prediction</h3>
+          <section class="section" id="english-predict">
+            <h3>10. Prediction</h3>
             <figure class="figure">
               <img src="../docs/Predict.png" alt="Predict">
               <figcaption>Figure 8: Predict tab. Use one manually entered sample or upload a batch file.</figcaption>
@@ -1211,8 +1323,8 @@
             </ol>
           </section>
 
-          <section class="section">
-            <h3>12. Data Preview and processed data</h3>
+          <section class="section" id="english-preview">
+            <h3>11. Data Preview and processed data</h3>
             <figure class="figure">
               <img src="../docs/Preview.png" alt="Preview">
               <figcaption>Figure 9: Preview tab. Check whether the imported data was read correctly.</figcaption>
@@ -1224,8 +1336,8 @@
             </ul>
           </section>
 
-          <section class="section">
-            <h3>13. Export and citation</h3>
+          <section class="section" id="english-export">
+            <h3>12. Export and citation</h3>
             <ul>
               <li><strong>Charts:</strong> PNG or SVG.</li>
               <li><strong>Results:</strong> JSON with task, targets, features, metrics, and validation information.</li>
@@ -1236,8 +1348,8 @@
             <pre><code>Bin Cao. (2026). TabularLab : A lightweight toolkit for tabular machine learning. Version 1.1.0. https://github.com/bin-cao/TabularLab</code></pre>
           </section>
 
-          <section class="section">
-            <h3>14. FAQ</h3>
+          <section class="section" id="english-faq">
+            <h3>13. FAQ</h3>
             <h4>Why does Run Analysis not work?</h4>
             <ul>
               <li>Make sure a dataset is loaded.</li>
@@ -1259,7 +1371,8 @@
     </main>
 
     <footer class="footer">
-      TabularLab manual V1.1.0. Author: Dr. Bin Cao / 曹斌. Download:
+      TabularLab manual V1.1.0. Author:
+      <a href="https://bin-cao.github.io/" target="_blank" rel="noreferrer">Dr. Bin Cao / 曹斌</a>. Download:
       <a href="https://github.com/Bin-Cao/TabularLab/releases" target="_blank" rel="noreferrer">Windows / macOS Apps</a>.
       Feedback: <a href="https://github.com/bin-cao/TabularLab/issues" target="_blank" rel="noreferrer">GitHub Issues</a>.
     </footer>
@@ -1270,6 +1383,58 @@
         zh: document.getElementById("manual-zh"),
         en: document.getElementById("manual-en")
       };
+      const tocLabels = {
+        en: {
+          title: "Contents",
+          download: "Download",
+          intro: ["#english", "1. What this app does"],
+          quick: ["#english-quick-start", "2. Quick Start"],
+          workflow: ["#english-workflow", "3. Full workflow"],
+          data: ["#english-data-source", "4. Data Source"],
+          task: ["#english-task-setup", "5. Task Setup"],
+          roles: ["#english-column-roles", "6. Column Roles"],
+          training: ["#english-training", "7. Processing & Training"],
+          results: ["#english-results", "8. Results"],
+          plots: ["#english-plots", "9. Charts and export"],
+          predict: ["#english-predict", "10. Prediction"],
+          preview: ["#english-preview", "11. Data Preview"],
+          export: ["#english-export", "12. Export and citation"],
+          faq: ["#english-faq", "13. FAQ"],
+          concepts: ["#english-concepts", "Appendix: ML Basics"]
+        },
+        zh: {
+          title: "目录",
+          download: "下载软件",
+          intro: ["#intro", "1. 软件是什么"],
+          quick: ["#quick-start", "2. 快速开始"],
+          workflow: ["#workflow", "3. 完整工作流"],
+          data: ["#data-source", "4. 数据源"],
+          task: ["#task-setup", "5. 任务设置"],
+          roles: ["#column-roles", "6. 字段角色"],
+          training: ["#training", "7. 处理与训练"],
+          results: ["#results", "8. 结果解读"],
+          plots: ["#plots", "9. 图表和导出"],
+          predict: ["#predict", "10. 预测"],
+          preview: ["#preview", "11. 数据预览"],
+          export: ["#export", "12. 导出与引用"],
+          faq: ["#faq", "13. 常见问题"],
+          concepts: ["#concepts", "附录：机器学习基础概念"]
+        }
+      };
+
+      function updateNavigation(lang) {
+        const labels = tocLabels[lang] || tocLabels.en;
+        const title = document.querySelector("[data-toc-title]");
+        if (title) title.textContent = labels.title;
+        document.querySelectorAll("[data-toc]").forEach((link) => {
+          const item = labels[link.dataset.toc];
+          if (!item) return;
+          link.href = item[0];
+          link.textContent = item[1];
+        });
+        const download = document.querySelector("[data-nav='download']");
+        if (download) download.textContent = labels.download;
+      }
 
       buttons.forEach((button) => {
         button.addEventListener("click", () => {
@@ -1277,8 +1442,11 @@
           buttons.forEach((item) => item.classList.toggle("active", item === button));
           Object.entries(manuals).forEach(([key, node]) => node.classList.toggle("active", key === lang));
           document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+          updateNavigation(lang);
         });
       });
+
+      updateNavigation("en");
     </script>
   </body>
 </html>
