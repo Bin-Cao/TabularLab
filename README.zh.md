@@ -18,6 +18,10 @@
   <a href="README.fr.md">Français</a>
 </p>
 
+<p align="center">
+  <img src="docs/poster_ch.png" alt="TabularLab 中文海报" width="820">
+</p>
+
 **TabularLab** 是一个轻量级表格机器学习工具，可作为桌面 App 使用，也可以在浏览器中打开。它支持回归、分类、聚类、可视化、预测和结果导出。
 
 **作者：** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  

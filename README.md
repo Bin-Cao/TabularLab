@@ -18,6 +18,10 @@
   <a href="README.fr.md">Français</a>
 </p>
 
+<p align="center">
+  <img src="docs/poster_en.png" alt="TabularLab English poster" width="820">
+</p>
+
 **TabularLab** is a lightweight toolkit for tabular machine learning. It can be used as a desktop app or opened in a browser, and supports regression, classification, clustering, visualization, prediction, and result export.
 
 **Author:** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  

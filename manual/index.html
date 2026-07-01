@@ -368,10 +368,18 @@
         box-shadow: var(--shadow);
       }
 
+      .poster-figure img {
+        max-width: 920px;
+      }
+
       .figure figcaption {
         width: min(760px, 100%);
         color: var(--muted);
         font-size: 13px;
+      }
+
+      .poster-figure figcaption {
+        width: min(920px, 100%);
       }
 
       .table-wrap {
@@ -641,6 +649,10 @@
           <section class="hero" id="intro">
             <h2>TabularLab V1.1.0 中文操作说明书</h2>
             <p>这份说明书面向第一次接触机器学习工具的用户。你不需要会写代码，只要准备一张表格，按照“导入数据、选择任务、设置字段、训练模型、查看结果、导出图表、进行预测”的顺序操作，就可以完成一次本地表格机器学习分析。</p>
+            <figure class="figure poster-figure">
+              <img src="../docs/poster_ch.png" alt="TabularLab 中文海报">
+              <figcaption>TabularLab 中文海报。</figcaption>
+            </figure>
             <div class="meta-grid">
               <div class="meta-item">
                 <strong>软件名称</strong>
@@ -1063,6 +1075,10 @@
           <section class="hero" id="english">
             <h2>TabularLab V1.1.0 English User Manual</h2>
             <p>This manual is written for beginners. You do not need to write code. Prepare a spreadsheet, then follow the workflow: import data, choose a task, define column roles, train a model, read results, export figures, and make predictions.</p>
+            <figure class="figure poster-figure">
+              <img src="../docs/poster_en.png" alt="TabularLab English poster">
+              <figcaption>TabularLab English poster.</figcaption>
+            </figure>
             <div class="meta-grid">
               <div class="meta-item"><strong>Version</strong><span>V1.1.0, released on 2026-07-01</span></div>
               <div class="meta-item"><strong>Author</strong><span><a href="https://bin-cao.github.io/" target="_blank" rel="noreferrer">Dr. Bin Cao / 曹斌</a></span></div>
