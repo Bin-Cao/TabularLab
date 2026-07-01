@@ -4,9 +4,9 @@
   <a href="https://github.com/bin-cao/TabularLab/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/forks"><img alt="GitHub forks" src="https://img.shields.io/github/forks/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/bin-cao/TabularLab"></a>
-  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-v1.0.0-146c5f"></a>
+  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-V1.1.0-146c5f"></a>
   <a href="https://bin-cao.github.io/TabularLab/"><img alt="Manual" src="https://img.shields.io/badge/manual-online-146c5f"></a>
-  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
+  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
 </p>
 
 <p align="center">
@@ -21,9 +21,9 @@
 **TabularLab** is a lightweight toolkit for tabular machine learning. It can be used as a desktop app or opened in a browser, and supports regression, classification, clustering, visualization, prediction, and result export.
 
 **Author:** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  
-**Version:** `v1.0.0`  
+**Version:** `V1.1.0`  
 **Repository:** <https://github.com/bin-cao/TabularLab>  
-**Download Apps:** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0>  
+**Download Apps:** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0>  
 **Feedback:** Please open an issue on [GitHub Issues](https://github.com/bin-cao/TabularLab/issues).
 
 ## Quick Start
@@ -31,7 +31,7 @@
 Download the Windows or macOS app from:
 
 ```text
-https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0
+https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0
 ```
 
 You can also open [`index.html`](index.html) in a browser. For local browser use, start a static server:
@@ -80,5 +80,5 @@ Then open `http://localhost:8000/`.
 ## Citation
 
 ```text
-Bin Cao. (2026). TabularLab : A lightweight toolkit for tabular machine learning. Version 1.0.0. https://github.com/bin-cao/TabularLab
+Bin Cao. (2026). TabularLab : A lightweight toolkit for tabular machine learning. Version 1.1.0. https://github.com/bin-cao/TabularLab
 ```

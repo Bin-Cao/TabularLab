@@ -4,9 +4,9 @@
   <a href="https://github.com/bin-cao/TabularLab/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/forks"><img alt="GitHub forks" src="https://img.shields.io/github/forks/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/bin-cao/TabularLab"></a>
-  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-v1.0.0-146c5f"></a>
+  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-V1.1.0-146c5f"></a>
   <a href="https://bin-cao.github.io/TabularLab/"><img alt="Manual" src="https://img.shields.io/badge/manual-online-146c5f"></a>
-  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
+  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
 </p>
 
 <p align="center">
@@ -21,9 +21,9 @@
 **TabularLab** est un outil leger pour l'apprentissage automatique sur donnees tabulaires. Il peut etre utilise comme application de bureau ou ouvert dans un navigateur, et prend en charge la regression, la classification, le clustering, la visualisation, la prediction et l'export des resultats.
 
 **Auteur :** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  
-**Version :** `v1.0.0`  
+**Version :** `V1.1.0`  
 **Depot :** <https://github.com/bin-cao/TabularLab>  
-**Telecharger l'App :** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0>  
+**Telecharger l'App :** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0>  
 **Retour :** veuillez ouvrir une demande sur [GitHub Issues](https://github.com/bin-cao/TabularLab/issues).
 
 ## Demarrage rapide
@@ -31,7 +31,7 @@
 Telechargez l'application Windows ou macOS ici :
 
 ```text
-https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0
+https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0
 ```
 
 Vous pouvez aussi ouvrir [`index.html`](index.html) dans un navigateur. Pour une utilisation locale dans le navigateur, un serveur statique est recommande :

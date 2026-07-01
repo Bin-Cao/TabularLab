@@ -4,9 +4,9 @@
   <a href="https://github.com/bin-cao/TabularLab/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/forks"><img alt="GitHub forks" src="https://img.shields.io/github/forks/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/bin-cao/TabularLab"></a>
-  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-v1.0.0-146c5f"></a>
+  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-V1.1.0-146c5f"></a>
   <a href="https://bin-cao.github.io/TabularLab/"><img alt="Manual" src="https://img.shields.io/badge/manual-online-146c5f"></a>
-  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
+  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
 </p>
 
 <p align="center">
@@ -21,9 +21,9 @@
 **TabularLab** ist ein leichtgewichtiges Toolkit fuer maschinelles Lernen mit tabellarischen Daten. Es kann als Desktop-App oder im Browser verwendet werden und unterstuetzt Regression, Klassifikation, Clustering, Visualisierung, Vorhersage und Ergebnisexport.
 
 **Autor:** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  
-**Version:** `v1.0.0`  
+**Version:** `V1.1.0`  
 **Repository:** <https://github.com/bin-cao/TabularLab>  
-**App-Download:** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0>  
+**App-Download:** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0>  
 **Feedback:** Vorschlaege bitte ueber [GitHub Issues](https://github.com/bin-cao/TabularLab/issues) einreichen.
 
 ## Schnellstart
@@ -31,7 +31,7 @@
 Laden Sie die Windows- oder macOS-App hier herunter:
 
 ```text
-https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0
+https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0
 ```
 
 Alternativ koennen Sie [`index.html`](index.html) im Browser oeffnen. Fuer die lokale Browser-Nutzung wird ein statischer Server empfohlen:

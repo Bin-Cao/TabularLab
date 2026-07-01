@@ -4,9 +4,9 @@
   <a href="https://github.com/bin-cao/TabularLab/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/forks"><img alt="GitHub forks" src="https://img.shields.io/github/forks/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/bin-cao/TabularLab"></a>
-  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-v1.0.0-146c5f"></a>
+  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-V1.1.0-146c5f"></a>
   <a href="https://bin-cao.github.io/TabularLab/"><img alt="Manual" src="https://img.shields.io/badge/manual-online-146c5f"></a>
-  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
+  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
 </p>
 
 <p align="center">
@@ -21,9 +21,9 @@
 **TabularLab** 是一个轻量级表格机器学习工具，可作为桌面 App 使用，也可以在浏览器中打开。它支持回归、分类、聚类、可视化、预测和结果导出。
 
 **作者：** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  
-**版本：** `v1.0.0`  
+**版本：** `V1.1.0`  
 **仓库：** <https://github.com/bin-cao/TabularLab>  
-**下载 App：** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0>  
+**下载 App：** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0>  
 **反馈：** 请在 [GitHub Issues](https://github.com/bin-cao/TabularLab/issues) 提交建议。
 
 ## 快速开始
@@ -31,7 +31,7 @@
 从下面地址下载 Windows 或 macOS App：
 
 ```text
-https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0
+https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0
 ```
 
 也可以用浏览器打开 [`index.html`](index.html)。如果使用本地浏览器方式，建议启动静态服务器：
@@ -80,5 +80,5 @@ python3 -m http.server 8000
 ## 引用
 
 ```text
-Bin Cao. (2026). TabularLab : A lightweight toolkit for tabular machine learning. Version 1.0.0. https://github.com/bin-cao/TabularLab
+Bin Cao. (2026). TabularLab : A lightweight toolkit for tabular machine learning. Version 1.1.0. https://github.com/bin-cao/TabularLab
 ```

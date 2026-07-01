@@ -4,9 +4,9 @@
   <a href="https://github.com/bin-cao/TabularLab/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/forks"><img alt="GitHub forks" src="https://img.shields.io/github/forks/bin-cao/TabularLab?style=social"></a>
   <a href="https://github.com/bin-cao/TabularLab/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/bin-cao/TabularLab"></a>
-  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-v1.0.0-146c5f"></a>
+  <a href="docs/VERSION.md"><img alt="Version" src="https://img.shields.io/badge/version-V1.1.0-146c5f"></a>
   <a href="https://bin-cao.github.io/TabularLab/"><img alt="Manual" src="https://img.shields.io/badge/manual-online-146c5f"></a>
-  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
+  <a href="https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0"><img alt="Download Apps" src="https://img.shields.io/badge/download-apps-146c5f"></a>
 </p>
 
 <p align="center">
@@ -21,9 +21,9 @@
 **TabularLab** は、表形式データ向けの軽量な機械学習ツールです。デスクトップ App として利用でき、ブラウザでも開けます。回帰、分類、クラスタリング、可視化、予測、結果のエクスポートに対応します。
 
 **作者:** [Dr. Bin Cao / 曹斌](https://bin-cao.github.io/)  
-**バージョン:** `v1.0.0`  
+**バージョン:** `V1.1.0`  
 **リポジトリ:** <https://github.com/bin-cao/TabularLab>  
-**App ダウンロード:** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0>  
+**App ダウンロード:** <https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0>  
 **フィードバック:** 改善提案は [GitHub Issues](https://github.com/bin-cao/TabularLab/issues) に投稿してください。
 
 ## クイックスタート
@@ -31,7 +31,7 @@
 Windows または macOS App は次のページからダウンロードできます。
 
 ```text
-https://github.com/Bin-Cao/TabularLab/releases/tag/V1.0.0
+https://github.com/Bin-Cao/TabularLab/releases/tag/V1.1.0
 ```
 
 ブラウザで [`index.html`](index.html) を開くこともできます。ブラウザでローカル利用する場合は、静的サーバーの使用を推奨します。

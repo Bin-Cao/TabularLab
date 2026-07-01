@@ -8,18 +8,21 @@
   </head>
   <body>
     <header class="topbar">
-      <div>
-        <h1>TabularLab</h1>
-        <p data-i18n="subtitle">本地表格机器学习分析平台</p>
-        <div class="header-meta">
-          <span id="headerVersion"></span>
-          <a id="headerAuthorLink" target="_blank" rel="noreferrer"></a>
-          <a id="headerManualLink" target="_blank" rel="noreferrer" data-i18n="manualLink">说明书</a>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">TL</div>
+        <div class="brand-copy">
+          <h1>TabularLab</h1>
+          <p data-i18n="subtitle">本地表格机器学习分析平台</p>
+          <div class="header-meta">
+            <span id="headerVersion"></span>
+            <a id="headerAuthorLink" target="_blank" rel="noreferrer"></a>
+            <a id="headerManualLink" target="_blank" rel="noreferrer" data-i18n="manualLink">说明书</a>
+          </div>
+          <p class="feedback-link">
+            <span data-i18n="feedbackPrompt">If you have any suggestions for improvement, please open an issue on</span>
+            <a id="headerIssueLink" target="_blank" rel="noreferrer">GitHub</a>
+          </p>
         </div>
-        <p class="feedback-link">
-          <span data-i18n="feedbackPrompt">If you have any suggestions for improvement, please open an issue on</span>
-          <a id="headerIssueLink" target="_blank" rel="noreferrer">GitHub</a>
-        </p>
       </div>
       <div class="top-actions">
         <button class="icon-btn" id="themeToggle" title="Theme">◐</button>
@@ -34,6 +37,7 @@
       <aside class="sidebar">
         <section class="panel upload-panel">
           <h2 data-i18n="dataSource">数据源</h2>
+          <p class="panel-note" data-i18n="dataSourceHelp">导入 CSV/Excel 或示例数据，决定后续分析、建模和预测使用的数据表。</p>
           <label class="dropzone" for="fileInput" id="dropzone">
             <span data-i18n="dropFile">拖入 CSV/TSV/Excel 文件，或点击选择</span>
             <small data-i18n="localOnly">数据只在本设备本地处理</small>
@@ -53,6 +57,7 @@
 
         <section class="panel">
           <h2 data-i18n="taskSetup">任务设置</h2>
+          <p class="panel-note" data-i18n="taskSetupHelp">选择回归、分类或聚类任务，指定目标列和特征列，会直接影响模型训练和结果解释。</p>
           <label>
             <span data-i18n="taskType">任务类型</span>
             <select id="taskType">
@@ -77,7 +82,7 @@
 
         <section class="panel">
           <h2 data-i18n="columnRoles">字段角色</h2>
-          <p class="muted compact" data-i18n="columnRolesHint">导入数据后，勾选哪些列作为特征，哪些列作为目标。目标支持多选。</p>
+          <p class="panel-note" data-i18n="columnRolesHint">导入数据后，勾选哪些列作为特征，哪些列作为目标。目标支持多选。</p>
           <div class="role-table-wrap">
             <table id="columnRoleTable" class="role-table"></table>
           </div>
@@ -85,6 +90,7 @@
 
         <section class="panel">
           <h2 data-i18n="processing">处理与训练</h2>
+          <p class="panel-note" data-i18n="processingHelp">设置缺失值处理、文本编码、模型和训练参数，用来控制数据清洗方式和模型复杂度。</p>
           <label>
             <span data-i18n="missingStrategy">缺失值</span>
             <select id="missingStrategy">
@@ -129,6 +135,7 @@
 
         <section class="panel citation-panel">
           <h2 data-i18n="versionCitation">版本与引用</h2>
+          <p class="panel-note" data-i18n="citationHelp">复制软件引用和 BibTeX，便于在论文、报告或补充材料中注明工具来源。</p>
           <div class="mini-meta">
             <span id="operationVersion"></span>
             <a id="operationAuthorLink" target="_blank" rel="noreferrer"></a>
@@ -148,6 +155,8 @@
         </section>
       </aside>
 
+      <div class="sidebar-resizer" id="sidebarResizer" role="separator" aria-orientation="vertical" aria-label="Resize sidebar"></div>
+
       <section class="workspace">
         <nav class="tabs" aria-label="Views">
           <button class="tab active" data-tab="overview" data-i18n="overview">概览</button>
@@ -162,6 +171,7 @@
           <div class="metrics" id="datasetMetrics"></div>
           <div class="panel wide">
             <h2 data-i18n="columnSummary">字段摘要</h2>
+            <p class="panel-note" data-i18n="columnSummaryHelp">查看每列的数据类型、缺失、分布和样本值，用于判断哪些字段适合建模。</p>
             <div class="table-wrap">
               <table id="summaryTable"></table>
             </div>
@@ -169,26 +179,129 @@
         </section>
 
         <section id="visuals" class="tab-panel">
+          <div class="panel wide">
+            <h2 data-i18n="visualSettings">绘图设置</h2>
+            <p class="panel-note" data-i18n="visualSettingsHelp">选择图表类型、坐标列和导出样式，可调整颜色、字体、字号、标签距离和导出格式。</p>
+          </div>
           <div class="visual-toolbar">
             <label>
               <span data-i18n="chartType">图表类型</span>
               <select id="chartType">
                 <option value="histogram" data-i18n="histogram">直方图</option>
+                <option value="violin" data-i18n="violin">琴图</option>
                 <option value="scatter" data-i18n="scatter">散点图</option>
                 <option value="correlation" data-i18n="correlation">相关性热力图</option>
                 <option value="target" data-i18n="targetPlot">目标关系图</option>
               </select>
             </label>
             <label>
-              <span>X</span>
+              <span id="xColumnLabel">X</span>
               <select id="xColumn"></select>
             </label>
             <label>
-              <span>Y</span>
+              <span id="yColumnLabel">Y</span>
               <select id="yColumn"></select>
+            </label>
+            <label>
+              <span data-i18n="correlationMaxFeatures">热力图最大特征数</span>
+              <input id="correlationMaxFeatures" data-chart-setting="correlationMaxFeatures" type="number" min="2" max="40" value="14">
+            </label>
+            <label>
+              <span data-i18n="correlationStyle">热力图风格</span>
+              <select id="correlationStyle" data-chart-setting="correlationStyle">
+                <option value="blueRed" data-i18n="heatmapBlueRed">蓝红</option>
+                <option value="tealOrange" data-i18n="heatmapTealOrange">青橙</option>
+                <option value="purpleGreen" data-i18n="heatmapPurpleGreen">紫绿</option>
+                <option value="gray" data-i18n="heatmapGray">灰阶</option>
+              </select>
             </label>
             <button id="drawChartBtn" data-i18n="draw">绘制</button>
             <button id="saveChartBtn" class="secondary" data-i18n="saveChart">保存图表</button>
+          </div>
+          <div class="chart-style-panel">
+            <label>
+              <span data-i18n="exportFormat">导出格式</span>
+              <select id="chartExportFormat" data-chart-setting="exportFormat">
+                <option value="png">PNG</option>
+                <option value="svg">SVG</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="fontFamily">字体</span>
+              <select id="chartFontFamily" data-chart-setting="fontFamily">
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="'Microsoft YaHei', sans-serif">微软雅黑</option>
+                <option value="'Noto Sans CJK SC', sans-serif">Noto Sans CJK</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="titleSize">标题字号</span>
+              <input id="chartTitleSize" data-chart-setting="titleSize" type="number" min="14" max="64" value="30">
+            </label>
+            <label>
+              <span data-i18n="labelSize">标签字号</span>
+              <input id="chartLabelSize" data-chart-setting="labelSize" type="number" min="10" max="40" value="18">
+            </label>
+            <label>
+              <span data-i18n="tickSize">刻度字号</span>
+              <input id="chartTickSize" data-chart-setting="tickSize" type="number" min="8" max="32" value="16">
+            </label>
+            <label>
+              <span data-i18n="xLabelOffset">X 标签距离</span>
+              <input id="chartXLabelOffset" data-chart-setting="xLabelOffset" type="number" min="12" max="120" value="40">
+            </label>
+            <label>
+              <span data-i18n="yLabelOffset">Y 标签距离</span>
+              <input id="chartYLabelOffset" data-chart-setting="yLabelOffset" type="number" min="12" max="120" value="40">
+            </label>
+            <label>
+              <span data-i18n="xTickOffset">X 刻度距离</span>
+              <input id="chartXTickOffset" data-chart-setting="xTickOffset" type="number" min="10" max="80" value="20">
+            </label>
+            <label>
+              <span data-i18n="yTickOffset">Y 刻度距离</span>
+              <input id="chartYTickOffset" data-chart-setting="yTickOffset" type="number" min="10" max="80" value="20">
+            </label>
+            <label>
+              <span data-i18n="xLabelAngle">X 标签角度</span>
+              <input id="chartXLabelAngle" data-chart-setting="xLabelAngle" type="number" min="0" max="90" value="36">
+            </label>
+            <label>
+              <span data-i18n="yLabelAngle">Y 标签角度</span>
+              <input id="chartYLabelAngle" data-chart-setting="yLabelAngle" type="number" min="-90" max="90" value="0">
+            </label>
+            <label>
+              <span data-i18n="pointSize">点大小</span>
+              <input id="chartPointSize" data-chart-setting="pointSize" type="number" min="2" max="18" value="5">
+            </label>
+            <label>
+              <span data-i18n="chartWidth">图宽</span>
+              <input id="chartWidth" data-chart-setting="width" type="number" min="480" max="2400" step="40" value="1200">
+            </label>
+            <label>
+              <span data-i18n="chartHeight">图高</span>
+              <input id="chartHeight" data-chart-setting="height" type="number" min="320" max="1800" step="40" value="720">
+            </label>
+            <label>
+              <span data-i18n="backgroundColor">背景</span>
+              <input id="chartBackgroundColor" data-chart-setting="background" type="color" value="#fbfcfd">
+            </label>
+            <label>
+              <span data-i18n="textColor">文字</span>
+              <input id="chartTextColor" data-chart-setting="textColor" type="color" value="#1d2530">
+            </label>
+            <label>
+              <span data-i18n="gridColor">网格</span>
+              <input id="chartGridColor" data-chart-setting="gridColor" type="color" value="#e5ebf1">
+            </label>
+            <label>
+              <span data-i18n="accentColor">主色</span>
+              <input id="chartAccentColor" data-chart-setting="accentColor" type="color" value="#0f766e">
+            </label>
+            <button type="button" class="secondary chart-reset-btn" data-i18n="resetChartDefaults">恢复默认</button>
           </div>
           <div class="chart-shell">
             <canvas id="chartCanvas" width="1200" height="720"></canvas>
@@ -197,6 +310,7 @@
 
         <section id="results" class="tab-panel">
           <div id="evaluationNotice" class="evaluation-notice"></div>
+          <div id="resultSummary" class="summary-report"></div>
           <div class="metrics" id="modelMetrics"></div>
           <div class="panel wide">
             <div class="panel-head">
@@ -215,12 +329,117 @@
                 <select id="resultTargetSelect" aria-label="Result target"></select>
                 <select id="projectionMethodSelect" aria-label="Projection method">
                   <option value="pca" data-i18n="projectionPca">PCA 投影</option>
+                  <option value="tsne" data-i18n="projectionTsne">t-SNE 投影</option>
                   <option value="numeric" data-i18n="projectionNumeric">前两个数值特征</option>
                   <option value="encoded" data-i18n="projectionEncoded">前两个编码特征</option>
                 </select>
                 <button id="drawResultChartBtn" class="secondary" data-i18n="draw">绘制</button>
                 <button id="saveResultChartBtn" class="secondary" data-i18n="saveChart">保存图表</button>
               </div>
+            </div>
+            <p class="panel-note" data-i18n="resultAnalysisHelp">根据预测结果绘制真实值对比、混淆矩阵或聚类投影，用来判断模型表现和错误分布。</p>
+            <div class="chart-style-panel">
+              <div class="chart-setting-note" id="resultChartSettingNote"></div>
+              <label data-result-setting="all">
+                <span data-i18n="exportFormat">导出格式</span>
+                <select data-chart-setting="exportFormat">
+                  <option value="png">PNG</option>
+                  <option value="svg">SVG</option>
+                </select>
+              </label>
+              <label data-result-setting="all">
+                <span data-i18n="fontFamily">字体</span>
+                <select data-chart-setting="fontFamily">
+                  <option value="Arial, sans-serif">Arial</option>
+                  <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+                  <option value="'Times New Roman', serif">Times New Roman</option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="'Microsoft YaHei', sans-serif">微软雅黑</option>
+                  <option value="'Noto Sans CJK SC', sans-serif">Noto Sans CJK</option>
+                </select>
+              </label>
+              <label data-result-setting="all">
+                <span data-i18n="titleSize">标题字号</span>
+                <input data-chart-setting="titleSize" type="number" min="14" max="64" value="30">
+              </label>
+              <label data-result-setting="all">
+                <span data-i18n="labelSize">标签字号</span>
+                <input data-chart-setting="labelSize" type="number" min="10" max="40" value="18">
+              </label>
+              <label data-result-setting="regression clustering">
+                <span data-i18n="tickSize">刻度字号</span>
+                <input data-chart-setting="tickSize" type="number" min="8" max="32" value="16">
+              </label>
+              <label data-result-setting="regression clustering">
+                <span data-i18n="xLabelOffset">X 标签距离</span>
+                <input data-chart-setting="xLabelOffset" type="number" min="12" max="120" value="40">
+              </label>
+              <label data-result-setting="regression clustering">
+                <span data-i18n="yLabelOffset">Y 标签距离</span>
+                <input data-chart-setting="yLabelOffset" type="number" min="12" max="120" value="40">
+              </label>
+              <label data-result-setting="regression clustering">
+                <span data-i18n="xTickOffset">X 刻度距离</span>
+                <input data-chart-setting="xTickOffset" type="number" min="10" max="80" value="20">
+              </label>
+              <label data-result-setting="regression clustering">
+                <span data-i18n="yTickOffset">Y 刻度距离</span>
+                <input data-chart-setting="yTickOffset" type="number" min="10" max="80" value="20">
+              </label>
+              <label data-result-setting="classification">
+                <span data-i18n="correlationStyle">热力图风格</span>
+                <select data-chart-setting="correlationStyle">
+                  <option value="blueRed" data-i18n="heatmapBlueRed">蓝红</option>
+                  <option value="tealOrange" data-i18n="heatmapTealOrange">青橙</option>
+                  <option value="purpleGreen" data-i18n="heatmapPurpleGreen">紫绿</option>
+                  <option value="gray" data-i18n="heatmapGray">灰阶</option>
+                </select>
+              </label>
+              <label data-result-setting="classification">
+                <span data-i18n="xLabelAngle">X 标签角度</span>
+                <input data-chart-setting="xLabelAngle" type="number" min="0" max="90" value="36">
+              </label>
+              <label data-result-setting="classification">
+                <span data-i18n="yLabelAngle">Y 标签角度</span>
+                <input data-chart-setting="yLabelAngle" type="number" min="-90" max="90" value="0">
+              </label>
+              <label data-result-setting="classification">
+                <span data-i18n="matrixValueSize">矩阵数字字号</span>
+                <input data-chart-setting="matrixValueSize" type="number" min="8" max="36" value="18">
+              </label>
+              <label data-result-setting="classification">
+                <span data-i18n="matrixValueColor">矩阵数字颜色</span>
+                <input data-chart-setting="matrixValueColor" type="color" value="#1d2530">
+              </label>
+              <label data-result-setting="regression clustering">
+                <span data-i18n="pointSize">点大小</span>
+                <input data-chart-setting="pointSize" type="number" min="2" max="18" value="5">
+              </label>
+              <label data-result-setting="all">
+                <span data-i18n="chartWidth">图宽</span>
+                <input data-chart-setting="width" type="number" min="480" max="2400" step="40" value="1200">
+              </label>
+              <label data-result-setting="all">
+                <span data-i18n="chartHeight">图高</span>
+                <input data-chart-setting="height" type="number" min="320" max="1800" step="40" value="720">
+              </label>
+              <label data-result-setting="all">
+                <span data-i18n="backgroundColor">背景</span>
+                <input data-chart-setting="background" type="color" value="#fbfcfd">
+              </label>
+              <label data-result-setting="all">
+                <span data-i18n="textColor">文字</span>
+                <input data-chart-setting="textColor" type="color" value="#1d2530">
+              </label>
+              <label data-result-setting="regression clustering">
+                <span data-i18n="gridColor">网格</span>
+                <input data-chart-setting="gridColor" type="color" value="#e5ebf1">
+              </label>
+              <label data-result-setting="regression clustering classification">
+                <span data-i18n="accentColor">主色</span>
+                <input data-chart-setting="accentColor" type="color" value="#0f766e">
+              </label>
+              <button type="button" class="secondary chart-reset-btn" data-result-setting="all" data-i18n="resetChartDefaults">恢复默认</button>
             </div>
             <div class="chart-shell">
               <canvas id="resultCanvas" width="1200" height="720"></canvas>
@@ -234,6 +453,7 @@
               <h2 data-i18n="singlePrediction">单条预测</h2>
               <button id="predictBtn" data-i18n="predictNow">预测</button>
             </div>
+            <p class="panel-note" data-i18n="singlePredictionHelp">手动输入一行特征值，快速查看当前模型对单个样本的预测结果。</p>
             <div id="predictionForm" class="prediction-grid"></div>
             <div id="predictionOutput" class="prediction-output"></div>
           </div>
@@ -242,6 +462,7 @@
               <h2 data-i18n="batchPrediction">批量预测</h2>
               <button id="batchPredictBtn" class="secondary" data-i18n="runBatch">上传文件并预测</button>
             </div>
+            <p class="panel-note" data-i18n="batchPredictionHelp">上传包含相同特征列的新表格，批量追加预测列并导出结果文件。</p>
             <div class="batch-grid">
               <label>
                 <span data-i18n="batchFile">预测文件</span>
@@ -266,6 +487,7 @@
                 <button id="exportCleanBtn" class="secondary" data-i18n="exportClean">保存处理后数据</button>
               </div>
             </div>
+            <p class="panel-note" data-i18n="previewHelp">查看原始数据前几行，也可以导出经过缺失处理和编码后的建模数据。</p>
             <div class="table-wrap">
               <table id="dataTable"></table>
             </div>
@@ -275,6 +497,7 @@
         <section id="about" class="tab-panel">
           <div class="panel wide">
             <h2 data-i18n="aboutProject">项目信息</h2>
+            <p class="panel-note" data-i18n="aboutProjectHelp">查看软件版本、发布日期、作者和引用信息，方便复现实验环境。</p>
             <div class="about-grid">
               <div>
                 <span class="meta-label" data-i18n="softwareTitle">软件标题</span>

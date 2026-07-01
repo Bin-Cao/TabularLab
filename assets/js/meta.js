@@ -1,6 +1,6 @@
 (function () {
-  const version = "1.0.0";
-  const released = "2026-06-29";
+  const version = "1.1.0";
+  const released = "2026-07-01";
   const title = "TabularLab : A lightweight toolkit for tabular machine learning.";
   const author = "Bin Cao";
   const authorDisplay = "Dr. Bin Cao / 曹斌";

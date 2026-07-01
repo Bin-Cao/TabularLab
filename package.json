@@ -1,6 +1,6 @@
 {
   "name": "tabularlab",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A lightweight browser-based toolkit for tabular machine learning.",
   "author": "Bin Cao",
   "license": "MIT",

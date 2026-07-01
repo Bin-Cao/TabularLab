@@ -13,6 +13,31 @@
 
   const $ = (id) => document.getElementById(id);
 
+  const chartDefaults = {
+    exportFormat: "png",
+    fontFamily: "Arial, sans-serif",
+    titleSize: "30",
+    labelSize: "18",
+    tickSize: "16",
+    xLabelOffset: "40",
+    yLabelOffset: "40",
+    xTickOffset: "20",
+    yTickOffset: "20",
+    xLabelAngle: "36",
+    yLabelAngle: "0",
+    pointSize: "5",
+    matrixValueSize: "18",
+    matrixValueColor: "#1d2530",
+    width: "1200",
+    height: "720",
+    correlationMaxFeatures: "14",
+    correlationStyle: "blueRed",
+    background: "#fbfcfd",
+    textColor: "#1d2530",
+    gridColor: "#e5ebf1",
+    accentColor: "#0f766e"
+  };
+
   const modelOptions = {
     regression: [
       ["linear", "Linear / Ridge Regression"],
@@ -207,9 +232,26 @@
     $("selectAllFeatures").addEventListener("click", () => setAllFeatures(true));
     $("clearFeatures").addEventListener("click", () => setAllFeatures(false));
     $("runBtn").addEventListener("click", runAnalysis);
+    $("chartType").addEventListener("change", () => {
+      updateChartControls();
+      drawCurrentChart();
+    });
     $("drawChartBtn").addEventListener("click", drawCurrentChart);
+    document.querySelectorAll("[data-chart-setting]").forEach((control) => {
+      control.addEventListener("input", () => {
+        syncChartControls(control);
+        drawCurrentChart();
+        drawResultChart();
+      });
+      control.addEventListener("change", () => {
+        syncChartControls(control);
+        drawCurrentChart();
+        drawResultChart();
+      });
+    });
+    document.querySelectorAll(".chart-reset-btn").forEach((button) => button.addEventListener("click", resetChartDefaults));
     $("saveChartBtn").addEventListener("click", () => {
-      Charts.saveCanvas($("chartCanvas"), "tabularlab-chart.png");
+      saveChart("chart");
       Utils.toast(I18N.t("chartSaved"));
     });
     $("saveResultsBtn").addEventListener("click", saveResults);
@@ -218,7 +260,7 @@
     $("resultTargetSelect").addEventListener("change", drawResultChart);
     $("projectionMethodSelect").addEventListener("change", drawResultChart);
     $("saveResultChartBtn").addEventListener("click", () => {
-      Charts.saveCanvas($("resultCanvas"), "tabularlab-result-analysis.png");
+      saveChart("result");
       Utils.toast(I18N.t("chartSaved"));
     });
     $("predictBtn").addEventListener("click", singlePredict);
@@ -231,6 +273,8 @@
     $("copyOperationCitationBtn").addEventListener("click", () => copyText(TabularLabMeta.citation));
     $("copyOperationBibtexBtn").addEventListener("click", () => copyText(TabularLabMeta.bibtex));
     document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => activateTab(tab.dataset.tab)));
+    setupSidebarResize();
+    updateChartControls();
     const dropzone = $("dropzone");
     ["dragenter", "dragover"].forEach((eventName) => dropzone.addEventListener(eventName, (e) => {
       e.preventDefault();
@@ -255,6 +299,42 @@
   function activateTab(name) {
     document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === name));
     document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.toggle("active", panel.id === name));
+  }
+
+  function setupSidebarResize() {
+    const resizer = $("sidebarResizer");
+    if (!resizer) return;
+    const saved = Number(localStorage.getItem("tabularlab.sidebarWidth"));
+    if (Number.isFinite(saved)) setSidebarWidth(saved);
+    resizer.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      resizer.setPointerCapture(event.pointerId);
+      document.body.classList.add("is-resizing-sidebar");
+    });
+    resizer.addEventListener("pointermove", (event) => {
+      if (!document.body.classList.contains("is-resizing-sidebar")) return;
+      const layoutLeft = document.querySelector(".layout").getBoundingClientRect().left;
+      setSidebarWidth(event.clientX - layoutLeft);
+    });
+    resizer.addEventListener("pointerup", (event) => {
+      resizer.releasePointerCapture(event.pointerId);
+      document.body.classList.remove("is-resizing-sidebar");
+      localStorage.setItem("tabularlab.sidebarWidth", String(currentSidebarWidth()));
+    });
+    window.addEventListener("resize", () => setSidebarWidth(currentSidebarWidth()));
+  }
+
+  function setSidebarWidth(width) {
+    const layout = document.querySelector(".layout");
+    if (!layout) return;
+    const max = Math.max(360, Math.min(620, layout.clientWidth * 0.46));
+    const next = Utils.clamp(Number(width) || 430, 320, max);
+    document.documentElement.style.setProperty("--sidebar-width", `${Math.round(next)}px`);
+  }
+
+  function currentSidebarWidth() {
+    const value = getComputedStyle(document.documentElement).getPropertyValue("--sidebar-width");
+    return Number.parseFloat(value) || 430;
   }
 
   function populateDefaultDatasets() {
@@ -402,6 +482,7 @@
     if (numeric) setTargetSelectValues([numeric.name]);
     if (state.columns[0]) $("xColumn").value = state.columns[0];
     if (state.columns[1]) $("yColumn").value = state.columns[1];
+    updateChartControls();
   }
 
   function renderColumnRoles() {
@@ -889,6 +970,7 @@
     $("resultLog").textContent = I18N.t("emptyState");
     $("evaluationNotice").classList.remove("show");
     $("evaluationNotice").innerHTML = "";
+    $("resultSummary").innerHTML = "";
     $("modelMetrics").innerHTML = "";
     $("predictionForm").innerHTML = "";
     $("predictionOutput").textContent = "";
@@ -896,6 +978,7 @@
     $("batchStatus").textContent = "";
     $("resultTargetSelect").innerHTML = "";
     $("projectionMethodSelect").style.display = "none";
+    updateResultChartSettings();
     renderCurrentDatasetInfo();
     renderAbout();
   }
@@ -957,15 +1040,19 @@
       $("modelMetrics").innerHTML = "";
       $("evaluationNotice").classList.remove("show");
       $("evaluationNotice").innerHTML = "";
+      $("resultSummary").innerHTML = "";
       $("resultLog").textContent = state.rows.length ? I18N.t("noModel") : I18N.t("emptyState");
+      updateResultChartSettings();
       return;
     }
     const b = state.modelBundle;
     renderEvaluationNotice(b);
+    $("resultSummary").innerHTML = buildSummaryReport(b);
     $("modelMetrics").innerHTML = evaluationCards(b) +
       targetMetricCards(b) +
       metric(b.preprocessor.featureNames.length, I18N.t("encodedFeatures"));
     $("resultLog").textContent = buildResultLog(b);
+    updateResultChartSettings();
   }
 
   function targetMetricCards(bundle) {
@@ -1006,6 +1093,71 @@
       metric(bundle.splitInfo.testRows, "Test rows");
   }
 
+  function buildSummaryReport(bundle) {
+    const targets = bundle.task === "clustering" ? I18N.t("clusteringNoTarget") : (bundle.targets || [bundle.target]).join(", ");
+    const modelName = bundle.model && bundle.model.type ? bundle.model.type : ((bundle.targetBundles && bundle.targetBundles[0] && bundle.targetBundles[0].model.type) || "");
+    const dataText = `${state.filename || I18N.t("currentDataset")} | ${bundle.splitInfo ? bundle.splitInfo.totalRows : state.rows.length} ${I18N.t("rows")}, ${state.columns.length} ${I18N.t("columns")}`;
+    const modeText = bundle.evaluationMode === "cross_validation_oof"
+      ? `${I18N.t("crossValidationMode")} (${bundle.opts.folds} ${I18N.t("folds")})`
+      : (bundle.task === "clustering" ? I18N.t("clustering") : I18N.t("testSplitMode"));
+    const effect = summarizeEffect(bundle);
+    const featureText = `${bundle.features.length} ${I18N.t("featureCount")} / ${bundle.preprocessor.featureNames.length} ${I18N.t("encodedFeatures")}`;
+    return `
+      <strong>${escapeHtml(I18N.t("summaryReport"))}</strong>
+      <dl>
+        ${summaryItem(I18N.t("summaryData"), dataText)}
+        ${summaryItem(I18N.t("summaryTask"), `${I18N.t(bundle.task)}${modelName ? ` | ${modelName}` : ""}`)}
+        ${summaryItem(I18N.t("summaryTarget"), targets)}
+        ${summaryItem(I18N.t("summaryFeatures"), featureText)}
+        ${summaryItem(I18N.t("summaryMode"), modeText)}
+        ${summaryItem(I18N.t("summaryEffect"), effect)}
+      </dl>
+    `;
+  }
+
+  function summaryItem(label, value) {
+    return `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`;
+  }
+
+  function summarizeEffect(bundle) {
+    if (bundle.task === "clustering") {
+      const metrics = bundle.metrics || {};
+      const parts = [];
+      if (Number.isFinite(metrics.clusters)) parts.push(`${I18N.t("cluster")}: ${metrics.clusters}`);
+      if (Number.isFinite(metrics.noise)) parts.push(`${I18N.t("noise")}: ${metrics.noise}`);
+      if (Number.isFinite(metrics.inertia)) parts.push(`Inertia: ${Utils.formatNumber(metrics.inertia, 4)}`);
+      if (Array.isArray(metrics.sizes)) parts.push(`${I18N.t("clusterSizes")}: ${metrics.sizes.join(", ")}`);
+      return parts.join("; ") || I18N.t("summaryNoMetrics");
+    }
+    const metricSets = collectMetricSets(bundle);
+    if (!metricSets.length) return I18N.t("summaryNoMetrics");
+    return metricSets.map((item) => {
+      const metrics = item.metrics || {};
+      const parts = [];
+      if (Number.isFinite(metrics.R2)) parts.push(`R2=${Utils.formatNumber(metrics.R2, 4)}`);
+      if (Number.isFinite(metrics.RMSE)) parts.push(`RMSE=${Utils.formatNumber(metrics.RMSE, 4)}`);
+      if (Number.isFinite(metrics.MAE)) parts.push(`MAE=${Utils.formatNumber(metrics.MAE, 4)}`);
+      if (Number.isFinite(metrics.Accuracy)) parts.push(`Accuracy=${Utils.formatNumber(metrics.Accuracy, 4)}`);
+      return `${item.target}: ${parts.join(", ") || I18N.t("summaryNoMetrics")}`;
+    }).join(" | ");
+  }
+
+  function collectMetricSets(bundle) {
+    if (bundle.evaluationMode === "cross_validation_oof" && bundle.cv) {
+      return (bundle.targets || []).map((target) => ({
+        target,
+        metrics: bundle.cv[target] ? bundle.cv[target].aggregateMetrics : {}
+      }));
+    }
+    if (bundle.targetBundles && bundle.targetBundles.length) {
+      return bundle.targetBundles.map((targetBundle) => ({
+        target: targetBundle.target,
+        metrics: targetBundle.metrics
+      }));
+    }
+    return [{ target: bundle.target || I18N.t("target"), metrics: bundle.metrics }];
+  }
+
   function renderEvaluationNotice(bundle) {
     const notice = $("evaluationNotice");
     let title = I18N.t("evaluationMode");
@@ -1040,31 +1192,41 @@
       option.textContent = target;
       $("resultTargetSelect").appendChild(option);
     });
+    updateResultChartSettings();
+  }
+
+  function updateResultChartSettings() {
+    const task = state.modelBundle ? state.modelBundle.task : "all";
+    const note = $("resultChartSettingNote");
+    if (note) {
+      note.textContent = task === "regression"
+        ? I18N.t("regressionChartSettings")
+        : (task === "classification" ? I18N.t("classificationChartSettings") : (task === "clustering" ? I18N.t("clusteringChartSettings") : ""));
+    }
+    document.querySelectorAll("[data-result-setting]").forEach((node) => {
+      const applies = node.dataset.resultSetting.split(/\s+/);
+      const visible = applies.includes("all") || applies.includes(task);
+      node.hidden = !visible;
+    });
   }
 
   function drawResultChart() {
+    applyChartSize($("resultCanvas"));
+    renderResultChart($("resultCanvas"));
+  }
+
+  function renderResultChart(canvas) {
     if (!state.modelBundle || !state.predictions.length) return;
     const task = state.modelBundle.task;
+    const style = getChartStyle();
     if (task === "regression") {
       const target = $("resultTargetSelect").value || (state.modelBundle.targets || [state.modelBundle.target])[0];
-      Charts.predictionScatter(
-        $("resultCanvas"),
-        state.predictions,
-        `${target}_actual`,
-        `${target}_prediction`,
-        `${target}: Actual vs Predicted`
-      );
+      return Charts.predictionScatter(canvas, state.predictions, `${target}_actual`, `${target}_prediction`, `${target}: Actual vs Predicted`, style);
       return;
     }
     if (task === "classification") {
       const target = $("resultTargetSelect").value || (state.modelBundle.targets || [state.modelBundle.target])[0];
-      Charts.confusionMatrix(
-        $("resultCanvas"),
-        state.predictions,
-        `${target}_actual`,
-        `${target}_prediction`,
-        `${target}: Confusion Matrix`
-      );
+      return Charts.confusionMatrix(canvas, state.predictions, `${target}_actual`, `${target}_prediction`, `${target}: Confusion Matrix`, style);
       return;
     }
     const numericFeatures = state.modelBundle.features.filter((feature) => {
@@ -1072,7 +1234,7 @@
       return info && info.type === "numeric";
     });
     const projection = buildClusterProjection($("projectionMethodSelect").value, numericFeatures);
-    Charts.clusterScatter($("resultCanvas"), projection.rows, projection.x, projection.y, "cluster", projection.title);
+    return Charts.clusterScatter(canvas, projection.rows, projection.x, projection.y, "cluster", projection.title, style);
   }
 
   function buildClusterProjection(method, numericFeatures) {
@@ -1082,13 +1244,13 @@
       return { rows: state.predictions, x, y, title: `Cluster Projection: ${x} / ${y}` };
     }
     const X = TabularData.transformRows(state.predictions, state.modelBundle.preprocessor);
-    const coords = method === "encoded" ? firstTwoEncoded(X) : pca2(X);
+    const coords = method === "encoded" ? firstTwoEncoded(X) : (method === "tsne" ? tsne2(X) : pca2(X));
     const rows = state.predictions.map((row, i) => ({ ...row, projection_x: coords[i][0], projection_y: coords[i][1] }));
     return {
       rows,
       x: "projection_x",
       y: "projection_y",
-      title: method === "encoded" ? "Cluster Projection: Encoded Features" : "Cluster Projection: PCA"
+      title: method === "encoded" ? "Cluster Projection: Encoded Features" : (method === "tsne" ? "Cluster Projection: t-SNE" : "Cluster Projection: PCA")
     };
   }
 
@@ -1111,6 +1273,85 @@
       row.reduce((sum, value, j) => sum + value * pc1[j], 0),
       row.reduce((sum, value, j) => sum + value * pc2[j], 0)
     ]);
+  }
+
+  function tsne2(X) {
+    if (!X.length) return [];
+    const n = X.length;
+    if (n === 1) return [[0, 0]];
+    const maxRows = 180;
+    const base = X.slice(0, maxRows);
+    const means = Array.from({ length: base[0].length }, (_, j) => Utils.mean(base.map((row) => row[j])));
+    const scales = means.map((_, j) => {
+      const variance = Utils.mean(base.map((row) => Math.pow(row[j] - means[j], 2)));
+      return Math.sqrt(variance) || 1;
+    });
+    const Z = base.map((row) => row.map((value, j) => (value - means[j]) / scales[j]));
+    const distances = Z.map((row, i) => Z.map((other, j) => i === j ? 0 : squaredDistance(row, other)));
+    const sigma = Math.sqrt(Utils.mean(distances.flat().filter((value) => value > 0))) || 1;
+    const P = distances.map((row, i) => {
+      const vals = row.map((d, j) => i === j ? 0 : Math.exp(-d / (2 * sigma * sigma)));
+      const sum = vals.reduce((a, b) => a + b, 0) || 1;
+      return vals.map((v) => v / sum);
+    });
+    for (let i = 0; i < P.length; i++) {
+      for (let j = 0; j < P.length; j++) P[i][j] = (P[i][j] + P[j][i]) / (2 * P.length);
+    }
+    let Y = Z.map((row, i) => {
+      const angle = (i / Z.length) * Math.PI * 2;
+      return [Math.cos(angle) * 0.01 + (row[0] || 0) * 0.001, Math.sin(angle) * 0.01 + (row[1] || 0) * 0.001];
+    });
+    let gains = Y.map(() => [0, 0]);
+    for (let iter = 0; iter < 260; iter++) {
+      const grads = Y.map(() => [0, 0]);
+      const Qnum = Y.map((row, i) => Y.map((other, j) => i === j ? 0 : 1 / (1 + squaredDistance(row, other))));
+      const qSum = Qnum.flat().reduce((a, b) => a + b, 0) || 1;
+      for (let i = 0; i < Y.length; i++) {
+        for (let j = 0; j < Y.length; j++) {
+          if (i === j) continue;
+          const q = Qnum[i][j] / qSum;
+          const force = 4 * ((iter < 80 ? 4 : 1) * P[i][j] - q) * Qnum[i][j];
+          grads[i][0] += force * (Y[i][0] - Y[j][0]);
+          grads[i][1] += force * (Y[i][1] - Y[j][1]);
+        }
+      }
+      const lr = iter < 80 ? 120 : 70;
+      Y = Y.map((row, i) => {
+        gains[i][0] = 0.82 * gains[i][0] - lr * grads[i][0];
+        gains[i][1] = 0.82 * gains[i][1] - lr * grads[i][1];
+        return [row[0] + gains[i][0], row[1] + gains[i][1]];
+      });
+      centerCoords(Y);
+    }
+    if (n <= maxRows) return Y;
+    const coords = X.map((row, i) => {
+      if (i < maxRows) return Y[i];
+      const z = row.map((value, j) => (value - means[j]) / scales[j]);
+      let best = 0;
+      let bestD = Infinity;
+      Z.forEach((candidate, j) => {
+        const d = squaredDistance(z, candidate);
+        if (d < bestD) {
+          bestD = d;
+          best = j;
+        }
+      });
+      return [Y[best][0], Y[best][1]];
+    });
+    return coords;
+  }
+
+  function squaredDistance(a, b) {
+    return a.reduce((sum, value, i) => sum + Math.pow(value - (b[i] || 0), 2), 0);
+  }
+
+  function centerCoords(coords) {
+    const mx = Utils.mean(coords.map((row) => row[0]));
+    const my = Utils.mean(coords.map((row) => row[1]));
+    coords.forEach((row) => {
+      row[0] -= mx;
+      row[1] -= my;
+    });
   }
 
   function powerComponent(X) {
@@ -1147,16 +1388,127 @@
   }
 
   function drawCurrentChart() {
+    applyChartSize($("chartCanvas"));
+    renderCurrentChart($("chartCanvas"));
+  }
+
+  function renderCurrentChart(canvas) {
     if (!state.rows.length) return;
     const type = $("chartType").value;
     const x = $("xColumn").value;
     const y = $("yColumn").value;
     const target = currentTargetColumns()[0] || $("targetColumn").value;
     const numeric = state.schema.filter((s) => s.type === "numeric").map((s) => s.name);
-    if (type === "histogram") Charts.histogram($("chartCanvas"), state.rows, x);
-    if (type === "scatter") Charts.scatter($("chartCanvas"), state.rows, x, y, target);
-    if (type === "correlation") Charts.correlation($("chartCanvas"), state.rows, numeric);
-    if (type === "target") Charts.targetPlot($("chartCanvas"), state.rows, x, target, $("taskType").value);
+    const style = getChartStyle();
+    if (type === "histogram") return Charts.histogram(canvas, state.rows, x, style);
+    if (type === "violin") return Charts.violin(canvas, state.rows, x, style);
+    if (type === "scatter") return Charts.scatter(canvas, state.rows, x, y, target, style);
+    if (type === "correlation") return Charts.correlation(canvas, state.rows, numeric, style);
+    if (type === "target") return Charts.targetPlot(canvas, state.rows, x, target, $("taskType").value, style);
+  }
+
+  function getChartStyle() {
+    const accent = chartSetting("accentColor") || chartDefaults.accentColor;
+    return Charts.styleOptions({
+      background: chartSetting("background"),
+      textColor: chartSetting("textColor"),
+      mutedColor: chartSetting("textColor"),
+      gridColor: chartSetting("gridColor"),
+      frameColor: chartSetting("gridColor"),
+      fontFamily: chartSetting("fontFamily"),
+      titleSize: readChartNumber("titleSize", 30),
+      labelSize: readChartNumber("labelSize", 18),
+      tickSize: readChartNumber("tickSize", 16),
+      valueSize: Math.max(10, readChartNumber("tickSize", 16) - 1),
+      xLabelOffset: readChartNumber("xLabelOffset", 40),
+      yLabelOffset: readChartNumber("yLabelOffset", 40),
+      xTickOffset: readChartNumber("xTickOffset", 20),
+      yTickOffset: readChartNumber("yTickOffset", 20),
+      xLabelAngle: readChartNumber("xLabelAngle", 36),
+      yLabelAngle: readChartNumber("yLabelAngle", 0),
+      pointSize: readChartNumber("pointSize", 5),
+      matrixValueSize: readChartNumber("matrixValueSize", 18),
+      matrixValueColor: chartSetting("matrixValueColor"),
+      correlationMaxFeatures: readChartNumber("correlationMaxFeatures", 14),
+      correlationStyle: chartSetting("correlationStyle"),
+      palette: [accent, "#dc5f3d", "#2563eb", "#b7791f", "#7c3aed", "#15803d", "#db2777", "#475569"]
+    });
+  }
+
+  function updateChartControls() {
+    if (!$("chartType")) return;
+    const type = $("chartType").value;
+    const fixedCount = type === "histogram" || type === "violin";
+    $("xColumn").disabled = type === "correlation";
+    $("yColumn").disabled = fixedCount || type === "correlation";
+    $("xColumnLabel").textContent = type === "correlation" ? I18N.t("numericFeatures") : "X";
+    $("yColumnLabel").textContent = fixedCount ? "Y = Count" : (type === "correlation" ? I18N.t("numericFeatures") : "Y");
+    $("yColumn").title = fixedCount ? "Y = Count" : "";
+    $("correlationMaxFeatures").disabled = type !== "correlation";
+    $("correlationStyle").disabled = type !== "correlation";
+  }
+
+  function chartSetting(key) {
+    const control = document.querySelector(`[data-chart-setting="${cssEscape(key)}"]`);
+    return control ? control.value : chartDefaults[key];
+  }
+
+  function readChartNumber(key, fallback) {
+    const value = Number(chartSetting(key));
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  function chartDimensions() {
+    return {
+      width: Utils.clamp(readChartNumber("width", 1200), 480, 2400),
+      height: Utils.clamp(readChartNumber("height", 720), 320, 1800)
+    };
+  }
+
+  function applyChartSize(canvas) {
+    if (!canvas || canvas.__svg) return;
+    const dims = chartDimensions();
+    if (canvas.width !== dims.width) canvas.width = dims.width;
+    if (canvas.height !== dims.height) canvas.height = dims.height;
+  }
+
+  function syncChartControls(source) {
+    if (!source || !source.dataset.chartSetting) return;
+    document.querySelectorAll(`[data-chart-setting="${cssEscape(source.dataset.chartSetting)}"]`).forEach((control) => {
+      if (control !== source) control.value = source.value;
+    });
+  }
+
+  function resetChartDefaults() {
+    Object.entries(chartDefaults).forEach(([key, value]) => {
+      document.querySelectorAll(`[data-chart-setting="${cssEscape(key)}"]`).forEach((control) => {
+        control.value = value;
+      });
+    });
+    drawCurrentChart();
+    drawResultChart();
+  }
+
+  function saveChart(kind) {
+    const format = chartSetting("exportFormat");
+    const dims = chartDimensions();
+    if (kind === "result") {
+      if (format === "svg") {
+        Charts.saveSvg((target) => renderResultChart(target), "tabularlab-result-analysis.svg", dims.width, dims.height);
+      } else {
+        applyChartSize($("resultCanvas"));
+        renderResultChart($("resultCanvas"));
+        Charts.saveCanvas($("resultCanvas"), "tabularlab-result-analysis.png");
+      }
+      return;
+    }
+    if (format === "svg") {
+      Charts.saveSvg((target) => renderCurrentChart(target), "tabularlab-chart.svg", dims.width, dims.height);
+    } else {
+      applyChartSize($("chartCanvas"));
+      renderCurrentChart($("chartCanvas"));
+      Charts.saveCanvas($("chartCanvas"), "tabularlab-chart.png");
+    }
   }
 
   function saveResults() {
@@ -1203,18 +1555,18 @@
 
   function renderAbout() {
     if (!window.TabularLabMeta) return;
-    $("headerVersion").textContent = `v${TabularLabMeta.version}`;
+    $("headerVersion").textContent = `V${TabularLabMeta.version}`;
     $("headerAuthorLink").textContent = TabularLabMeta.authorDisplay;
     $("headerAuthorLink").href = TabularLabMeta.authorUrl;
     $("headerManualLink").href = TabularLabMeta.manualUrl;
     $("headerIssueLink").href = TabularLabMeta.issueUrl;
-    $("operationVersion").textContent = `v${TabularLabMeta.version} | ${TabularLabMeta.released}`;
+    $("operationVersion").textContent = `V${TabularLabMeta.version} | ${TabularLabMeta.released}`;
     $("operationAuthorLink").textContent = TabularLabMeta.authorDisplay;
     $("operationAuthorLink").href = TabularLabMeta.authorUrl;
     $("operationCitationText").value = TabularLabMeta.citation;
     $("operationBibtexText").value = TabularLabMeta.bibtex;
     $("softwareTitle").textContent = TabularLabMeta.title;
-    $("softwareVersion").textContent = `v${TabularLabMeta.version}`;
+    $("softwareVersion").textContent = `V${TabularLabMeta.version}`;
     $("softwareReleased").textContent = TabularLabMeta.released;
     $("authorLink").textContent = TabularLabMeta.authorDisplay;
     $("authorLink").href = TabularLabMeta.authorUrl;
