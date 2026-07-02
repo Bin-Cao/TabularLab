@@ -834,6 +834,12 @@
               <li>导入后，左侧会显示当前数据集名称、行数和列数。</li>
               <li>进入“概览”查看字段摘要，确认列名、缺失值和数据类型是否合理。</li>
             </ol>
+            <h4>数据质量检查</h4>
+            <p>概览页会自动检查高缺失率列、常数列、疑似 ID 或唯一文本列、重复行、数值异常值，以及可能和目标列过于相似的目标泄露风险列。这些提示不会自动删除数据，而是帮助你决定哪些列需要忽略、修正或进一步检查。</p>
+            <div class="callout warning">
+              <strong>先修数据，再看模型</strong>
+              <p>如果数据质量检查提示目标泄露、重复行或大面积缺失，建议先修正字段角色和原始数据，再训练模型。否则指标可能很好看，但实际预测并不可靠。</p>
+            </div>
             <h4>加载示例数据</h4>
             <ol>
               <li>在“默认数据”下拉框选择一个示例。</li>
@@ -919,6 +925,13 @@
             </div>
             <h4>训练/测试划分和交叉验证</h4>
             <p>测试集比例决定多少数据留作最终评估。启用交叉验证后，软件会轮流把每一折作为验证集，再拼接所有验证预测，得到更稳的 OOF 评估。</p>
+            <h4>自动调参</h4>
+            <p>自动调参会在运行分析前尝试多组主要模型参数，例如正则化强度、学习率、树深度、树数量、K 值或提升轮数。软件会用内部验证分数比较候选参数，找到更好的组合后自动写回当前参数输入框，再用这组参数训练最终模型。</p>
+            <ul>
+              <li><strong>贝叶斯调参：</strong>更适合快速试探关键参数，候选数量较少，速度通常更快。</li>
+              <li><strong>网格搜索：</strong>按预设参数表逐项组合尝试，覆盖更规则，但可能更慢。</li>
+              <li><strong>使用建议：</strong>先用默认参数跑通流程；如果结果稳定但还想提升指标，再开启自动调参。数据较大或模型较复杂时，自动调参会明显增加训练时间。</li>
+            </ul>
           </section>
 
           <section class="section" id="results">
@@ -948,6 +961,17 @@
               <li><strong>噪声点：</strong>DBSCAN 中无法归入任何簇的样本。</li>
               <li><strong>Inertia：</strong>KMeans 的簇内距离，通常越小越紧凑，但不能单独决定最佳簇数。</li>
             </ul>
+            <h4>逆向推荐（仅回归）</h4>
+            <p>回归模型训练完成后，结果页会显示“逆向设计”面板。你可以输入一个或多个期望目标性能，并设置推荐数量 Top N。软件会在训练特征空间内生成 30000 个均匀候选点，排除上传数据中已经存在的已知特征组合，然后用当前模型预测每个候选点。</p>
+            <p>推荐结果按预测性能与期望性能之间的 L2 距离排序，距离越小表示越接近期望目标。报告会列出搜索方法、搜索空间、跳过的已知点数量、推荐特征组合、预测值和误差。</p>
+            <h4>逆向约束和导出</h4>
+            <p>逆向设计支持给特征加搜索约束。数值特征可以填写最小值和最大值，类别特征可以填写允许类别（用逗号分隔）。如果不填写约束，软件会使用上传数据中该特征的完整范围或已见类别。逆向结果可以导出为 CSV 或 JSON，便于保存 Top N 推荐、L2 距离、推荐特征、预测值、误差和搜索空间。</p>
+            <div class="callout warning">
+              <strong>逆向推荐不是实验保证</strong>
+              <p>推荐点来自当前模型在已导入特征范围内的预测，只能作为候选设计或实验优先级参考。模型训练数据少、指标较差或特征缺少关键物理信息时，推荐结果也会不可靠。</p>
+            </div>
+            <h4>特征重要性</h4>
+            <p>结果页会显示特征重要性表格和横向条形图。线性模型使用系数大小，树模型使用分裂次数，其他模型使用置换重要性近似。图表展示 Top 20 特征，表格展示更多特征、重要性数值和计算方法。它可以帮助判断模型主要依赖哪些输入，也能发现疑似 ID、泄露列或无意义特征是否影响了结果。</p>
           </section>
 
           <section class="section" id="plots">
@@ -1005,6 +1029,8 @@
               <strong>预测文件必须和训练特征一致</strong>
               <p>如果训练时用了 <code>density</code>、<code>temperature</code>、<code>process</code> 三列，新文件也必须有这些列。其他列可以保留，但不会作为模型输入。</p>
             </div>
+            <h4>保存和加载模型</h4>
+            <p>训练完成后可以在结果页保存模型 JSON。该文件包含任务类型、目标列、特征列、预处理器、编码信息、模型参数和模型本身。以后可以加载这个模型文件继续做单条预测或批量预测，不需要重新训练。加载模型后，新预测文件仍然必须包含训练时使用的同名特征列。</p>
           </section>
 
           <section class="section" id="preview">
@@ -1031,9 +1057,14 @@
               <li><strong>图表：</strong>PNG 或 SVG。</li>
               <li><strong>结果：</strong>JSON，包含任务、目标、特征、指标、交叉验证等信息。</li>
               <li><strong>预测：</strong>CSV，包含真实值、预测值或聚类结果。</li>
+              <li><strong>模型：</strong>JSON，包含预处理器、模型参数和训练后的模型，可重新加载用于预测。</li>
+              <li><strong>逆向设计：</strong>CSV 或 JSON，包含 Top N 推荐、预测值、误差、L2 距离和搜索空间。</li>
+              <li><strong>HTML 报告：</strong>包含结果总结、复现信息、特征重要性、逆向推荐和模型输出，可直接保存归档。</li>
               <li><strong>处理后数据：</strong>CSV，包含预处理后的建模输入。</li>
               <li><strong>引用：</strong>文本引用和 BibTeX。</li>
             </ul>
+            <h4>复现信息</h4>
+            <p>结果 JSON、HTML 报告和模型输出日志都会包含复现信息，例如软件版本、生成时间、数据集名称、任务类型、目标列、特征列、缺失值策略、编码策略、模型参数、随机种子、测试集比例、评估方式和训练/测试划分。写论文或项目报告时，建议把这些信息和导出的模型或结果文件一起保存。</p>
             <h4>推荐引用格式</h4>
             <pre><code>Bin Cao. (2026). TabularLab : A lightweight toolkit for tabular machine learning. Version 1.1.0. https://github.com/bin-cao/TabularLab</code></pre>
             <h4>BibTeX</h4>
@@ -1194,6 +1225,12 @@
               <li>After import, check the current dataset name, row count, and column count.</li>
               <li>Open Overview to inspect column types, missing values, and examples.</li>
             </ol>
+            <h4>Data quality check</h4>
+            <p>The Overview tab automatically checks high-missing columns, constant columns, ID-like or unique text columns, duplicate rows, numeric outliers, and possible target-leakage columns whose names are too similar to target names. These warnings do not delete data; they help you decide which columns need to be ignored, corrected, or reviewed.</p>
+            <div class="callout warning">
+              <strong>Fix data before trusting metrics</strong>
+              <p>If data quality warnings show target leakage, duplicate rows, or severe missingness, review column roles and raw data before training. Otherwise metrics may look strong while real prediction remains unreliable.</p>
+            </div>
             <div class="callout">
               <strong>Table preparation tips</strong>
               <p>The first row should contain column names. Avoid merged cells. Each column should have one meaning. Empty cells are allowed and can be handled later by preprocessing.</p>
@@ -1262,6 +1299,13 @@
               <li><strong>Clustering:</strong> start with KMeans; try DBSCAN for irregular clusters.</li>
             </ul>
             <p>Use train/test split for a simple evaluation. Use cross-validation OOF evaluation when you want a more stable estimate across all usable rows.</p>
+            <h4>Auto tuning</h4>
+            <p>Auto tuning tests multiple important model-parameter settings before the final run, such as regularization strength, learning rate, tree depth, tree count, K value, or boosting rounds. TabularLab compares candidate settings with an internal validation score, writes the best parameters back into the current parameter inputs, and then trains the final model with those settings.</p>
+            <ul>
+              <li><strong>Bayesian tuning:</strong> a faster search over key parameters with fewer candidate trials.</li>
+              <li><strong>Grid search:</strong> a more regular sweep over preset parameter combinations, but it can take longer.</li>
+              <li><strong>Recommendation:</strong> run the default model first. Enable auto tuning only after the workflow is correct and you want to improve metrics. Larger datasets and more complex models will take longer.</li>
+            </ul>
           </section>
 
           <section class="section" id="english-results">
@@ -1291,6 +1335,17 @@
               <li><strong>Noise:</strong> DBSCAN samples not assigned to any cluster.</li>
               <li><strong>Projection plot:</strong> PCA, t-SNE, numeric-feature, or encoded-feature projection.</li>
             </ul>
+            <h4>Inverse recommendation (regression only)</h4>
+            <p>After training a regression model, the Results tab shows an Inverse Design panel. Enter one or more desired target performance values and choose the recommendation count Top N. TabularLab generates 30000 uniformly distributed candidate points inside the trained feature space, excludes feature combinations already present in the uploaded data, and predicts every remaining candidate with the current model.</p>
+            <p>Recommendations are sorted by the L2 distance between predicted target values and desired target values. Smaller distance means the candidate is closer to the requested performance. The report includes the search method, feature-space coverage, skipped known points, recommended feature combinations, predicted values, and errors.</p>
+            <h4>Inverse constraints and export</h4>
+            <p>Inverse design supports optional search constraints. Numeric features can use narrower minimum and maximum values. Categorical features can use comma-separated allowed categories. Empty constraint fields use the full imported range or all observed categories. Inverse results can be exported as CSV or JSON with Top N recommendations, L2 distance, recommended features, predicted values, errors, and search-space information.</p>
+            <div class="callout warning">
+              <strong>Inverse recommendation is not an experimental guarantee</strong>
+              <p>The recommendations are model predictions inside the imported feature ranges. Use them as candidate designs or experiment-priority suggestions. If the training data are sparse, metrics are weak, or key physical features are missing, the recommended points may be unreliable.</p>
+            </div>
+            <h4>Feature importance</h4>
+            <p>The Results tab shows both a feature-importance table and a horizontal bar chart. Linear models use coefficient magnitude, tree models use split counts, and other models use approximate permutation importance. The chart shows the top 20 features, while the table lists more features, importance values, and the calculation method. Use it to understand what the model relies on and to spot possible ID, leakage, or meaningless features.</p>
           </section>
 
           <section class="section" id="english-plots">
@@ -1337,6 +1392,8 @@
               <li>Upload the file and check the requirement panel.</li>
               <li>Download the file with appended prediction columns.</li>
             </ol>
+            <h4>Save and load models</h4>
+            <p>After training, use Save Model in the Results tab to export a model JSON file. It contains the task, targets, feature columns, preprocessor, encoding information, model parameters, and trained model. Later, load that model file to continue single-row or batch prediction without retraining. A loaded model still requires new prediction files to contain the same feature column names used during training.</p>
           </section>
 
           <section class="section" id="english-preview">
@@ -1358,9 +1415,14 @@
               <li><strong>Charts:</strong> PNG or SVG.</li>
               <li><strong>Results:</strong> JSON with task, targets, features, metrics, and validation information.</li>
               <li><strong>Predictions:</strong> CSV with actual/predicted values or cluster labels.</li>
+              <li><strong>Model:</strong> JSON with preprocessor, model parameters, and trained model, reloadable for prediction.</li>
+              <li><strong>Inverse design:</strong> CSV or JSON with Top N recommendations, predicted values, errors, L2 distance, and search space.</li>
+              <li><strong>HTML report:</strong> a report containing summary, reproducibility information, feature importance, inverse recommendations, and model output.</li>
               <li><strong>Processed data:</strong> CSV after preprocessing.</li>
               <li><strong>Citation:</strong> plain text citation and BibTeX.</li>
             </ul>
+            <h4>Reproducibility information</h4>
+            <p>Results JSON, HTML reports, and model output logs include reproducibility information such as software version, generation time, dataset name, task, targets, features, missing-value strategy, encoding strategy, model parameters, random seed, test size, evaluation mode, and train/test split. Save this information with exported models or result files for papers and project records.</p>
             <pre><code>Bin Cao. (2026). TabularLab : A lightweight toolkit for tabular machine learning. Version 1.1.0. https://github.com/bin-cao/TabularLab</code></pre>
           </section>
 

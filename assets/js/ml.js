@@ -47,15 +47,16 @@
   function trainKnn(X, y, options) {
     return {
       type: options.task === "classification" ? "knn_classifier" : "knn_regressor",
+      task: options.task,
       X,
       y,
       k: options.k || 5,
       labels: options.labels || null,
       predict(row) {
-        const neighbors = X.map((x, index) => ({ d: distance(x, row), y: y[index] }))
+        const neighbors = this.X.map((x, index) => ({ d: distance(x, row), y: this.y[index] }))
           .sort((a, b) => a.d - b.d)
           .slice(0, this.k);
-        if (options.task === "regression") return Utils.mean(neighbors.map((n) => n.y));
+        if (this.task === "regression") return Utils.mean(neighbors.map((n) => n.y));
         const votes = new Map();
         neighbors.forEach((n) => votes.set(n.y, (votes.get(n.y) || 0) + 1));
         return Array.from(votes.entries()).sort((a, b) => b[1] - a[1])[0][0];
@@ -102,7 +103,7 @@
       b,
       labels: options.labels,
       predictProba(row) {
-        return softmax(W.map((w, c) => dot(w, row) + b[c]));
+        return softmax(this.W.map((w, c) => dot(w, row) + this.b[c]));
       },
       predict(row) {
         const probs = this.predictProba(row);
@@ -223,6 +224,7 @@
     const root = build(X.map((_, i) => i), 0);
     return {
       type: task === "regression" ? "decision_tree_regressor" : "decision_tree_classifier",
+      task,
       root,
       predict(row) {
         let node = root;
@@ -254,10 +256,11 @@
     }
     return {
       type: options.task === "regression" ? "random_forest_regressor" : "random_forest_classifier",
+      task: options.task,
       trees,
       predict(row) {
-        const votes = trees.map((tree) => tree.predict(row));
-        return options.task === "regression" ? Utils.mean(votes) : majority(votes);
+        const votes = this.trees.map((tree) => tree.predict(row));
+        return this.task === "regression" ? Utils.mean(votes) : majority(votes);
       }
     };
   }
@@ -279,7 +282,7 @@
       lr,
       estimators,
       predict(row) {
-        return estimators.reduce((value, tree) => value + lr * tree.predict(row), bias);
+        return this.estimators.reduce((value, tree) => value + this.lr * tree.predict(row), this.bias);
       }
     };
   }
@@ -301,7 +304,7 @@
       labels: options.labels,
       stats,
       predict(row) {
-        const scores = stats.map((item) => {
+        const scores = this.stats.map((item) => {
           let logp = Math.log(item.prior || 1e-9);
           for (let j = 0; j < row.length; j++) {
             const v = item.variance[j];
@@ -338,9 +341,10 @@
       type: "linear_svm_classifier",
       W,
       b,
+      classes,
       predict(row) {
-        const scores = W.map((w, c) => dot(w, row) + b[c]);
-        return classes[scores.indexOf(Math.max(...scores))];
+        const scores = this.W.map((w, c) => dot(w, row) + this.b[c]);
+        return this.classes[scores.indexOf(Math.max(...scores))];
       }
     };
   }
@@ -378,9 +382,10 @@
     }
     return {
       type: "dbscan",
+      X,
       assignments,
       predict(row) {
-        const nearest = X.map((x, i) => ({ i, d: distance(x, row) })).sort((a, b) => a.d - b.d)[0];
+        const nearest = this.X.map((x, i) => ({ i, d: distance(x, row) })).sort((a, b) => a.d - b.d)[0];
         return nearest ? assignments[nearest.i] : -1;
       }
     };

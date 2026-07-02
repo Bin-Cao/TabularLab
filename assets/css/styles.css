@@ -880,6 +880,11 @@ td.target-col {
   position: relative;
 }
 
+.importance-chart-shell {
+  min-height: 280px;
+  margin-bottom: 12px;
+}
+
 .chart-shell::before {
   content: "";
   position: absolute;
@@ -915,6 +920,139 @@ canvas {
   width: 100%;
   height: auto;
   display: block;
+}
+
+.chart-tooltip {
+  position: fixed;
+  z-index: 50;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 8px 10px;
+  border: 1px solid rgba(141, 153, 170, 0.36);
+  border-radius: 6px;
+  background: rgba(17, 24, 39, 0.94);
+  color: #f8fafc;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.26);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.chart-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.inverse-report {
+  display: grid;
+  gap: 12px;
+}
+
+.inverse-options {
+  max-width: 220px;
+}
+
+.subhead {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+.constraint-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.constraint-row {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.constraint-row strong {
+  overflow-wrap: anywhere;
+}
+
+.quality-list {
+  display: grid;
+  gap: 8px;
+}
+
+.quality-item {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--muted);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.quality-item span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quality-item.ok {
+  border-left-color: #15803d;
+}
+
+.quality-item.low {
+  border-left-color: #2563eb;
+}
+
+.quality-item.medium {
+  border-left-color: #b7791f;
+}
+
+.quality-item.high {
+  border-left-color: #dc5f3d;
+}
+
+.inverse-candidate {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.inverse-report dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.inverse-report dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.inverse-report dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.compact-table {
+  max-height: 360px;
+}
+
+.compact-table table {
+  font-size: 12px;
+}
+
+.compact-table td,
+.compact-table th {
+  max-width: 320px;
+  overflow-wrap: anywhere;
 }
 
 .log {

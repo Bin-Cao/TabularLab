@@ -8,7 +8,8 @@
     modelBundle: null,
     predictions: [],
     targetBundles: [],
-    currentPreset: null
+    currentPreset: null,
+    inverseDesignResult: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -287,6 +288,13 @@
     });
     $("saveResultsBtn").addEventListener("click", saveResults);
     $("savePredictionsBtn").addEventListener("click", savePredictions);
+    $("saveModelBtn").addEventListener("click", saveModel);
+    $("loadModelBtn").addEventListener("click", () => $("modelFileInput").click());
+    $("modelFileInput").addEventListener("change", loadModelFile);
+    $("saveReportBtn").addEventListener("click", saveHtmlReport);
+    $("runInverseDesignBtn").addEventListener("click", runInverseDesign);
+    $("saveInverseCsvBtn").addEventListener("click", () => saveInverseDesign("csv"));
+    $("saveInverseJsonBtn").addEventListener("click", () => saveInverseDesign("json"));
     $("drawResultChartBtn").addEventListener("click", drawResultChart);
     $("resultTargetSelect").addEventListener("change", drawResultChart);
     $("projectionMethodSelect").addEventListener("change", drawResultChart);
@@ -493,6 +501,7 @@
     state.predictions = [];
     state.targetBundles = [];
     state.currentPreset = preset || null;
+    state.inverseDesignResult = null;
     $("columnRoleTable").innerHTML = "";
     populateSelectors();
     applyPreset(preset);
@@ -527,6 +536,7 @@
     state.predictions = [];
     state.targetBundles = [];
     state.currentPreset = null;
+    state.inverseDesignResult = null;
     populateSelectors();
     renderColumnRoles();
     renderEmpty();
@@ -1051,7 +1061,9 @@
     state.targetBundles = targetBundles;
     state.modelBundle = { task, target, targets, features, opts, preprocessor, model, labels, metrics, cv, targetBundles, splitInfo, evaluationMode: cv ? "cross_validation_oof" : "test_split" };
     state.predictions = cv ? cvPredictions : testPredictions;
+    state.inverseDesignResult = null;
     renderResults();
+    renderInverseDesign();
     renderPredictionForm();
     renderBatchRequirements();
     populateResultTargets();
@@ -1246,6 +1258,7 @@
 
   function renderEmpty() {
     $("datasetMetrics").innerHTML = metric("0", I18N.t("rows")) + metric("0", I18N.t("columns"));
+    $("dataQualityOutput").innerHTML = "";
     $("summaryTable").innerHTML = "";
     $("dataTable").innerHTML = "";
     $("resultLog").textContent = I18N.t("emptyState");
@@ -1257,6 +1270,17 @@
     $("predictionOutput").textContent = "";
     $("batchRequirement").innerHTML = "";
     $("batchStatus").textContent = "";
+    $("inverseTargetForm").innerHTML = "";
+    $("inverseConstraintForm").innerHTML = "";
+    $("inverseDesignOutput").textContent = "";
+    $("inverseDesignPanel").hidden = true;
+    state.inverseDesignResult = null;
+    $("featureImportancePanel").hidden = true;
+    $("featureImportanceTable").innerHTML = "";
+    if ($("featureImportanceCanvas")) {
+      const ctx = $("featureImportanceCanvas").getContext("2d");
+      ctx.clearRect(0, 0, $("featureImportanceCanvas").width, $("featureImportanceCanvas").height);
+    }
     $("resultTargetSelect").innerHTML = "";
     $("projectionMethodSelect").style.display = "none";
     updateResultChartSettings();
@@ -1274,6 +1298,7 @@
       metric(missing, I18N.t("missing")),
       metric(numeric, I18N.t("numeric"))
     ].join("");
+    renderDataQuality();
     const head = [
       "Column",
       I18N.t("type"),
@@ -1316,6 +1341,66 @@
     $("dataTable").innerHTML = tableHtml(state.columns, rows, { targetColumns: currentTargetColumns() });
   }
 
+  function renderDataQuality() {
+    const node = $("dataQualityOutput");
+    if (!node) return;
+    const issues = dataQualityIssues();
+    if (!issues.length) {
+      node.innerHTML = `<div class="quality-item ok"><strong>${escapeHtml(I18N.t("qualityNoIssue"))}</strong><span>${escapeHtml(I18N.t("qualityNoIssueDetail"))}</span></div>`;
+      return;
+    }
+    node.innerHTML = issues.map((issue) => `
+      <div class="quality-item ${issue.level}">
+        <strong>${escapeHtml(issue.title)}</strong>
+        <span>${escapeHtml(issue.detail)}</span>
+      </div>
+    `).join("");
+  }
+
+  function dataQualityIssues() {
+    if (!state.rows.length) return [];
+    const issues = [];
+    const rowCount = state.rows.length;
+    const targets = currentTargetColumns();
+    state.schema.forEach((col) => {
+      if (col.missingRate >= 0.3) {
+        issues.push({
+          level: col.missingRate >= 0.6 ? "high" : "medium",
+          title: formatI18n("qualityHighMissing", { column: col.name }),
+          detail: formatI18n("qualityHighMissingDetail", { percent: Utils.formatNumber(col.missingRate * 100, 1) })
+        });
+      }
+      if (col.unique <= 1) {
+        issues.push({ level: "medium", title: formatI18n("qualityConstant", { column: col.name }), detail: I18N.t("qualityConstantDetail") });
+      }
+      if (col.unique >= Math.max(12, rowCount * 0.9) && col.type !== "numeric") {
+        issues.push({ level: "medium", title: formatI18n("qualityIdLike", { column: col.name }), detail: I18N.t("qualityIdLikeDetail") });
+      }
+      if (col.type === "numeric") {
+        const values = state.rows.map((row) => Utils.toNumber(row[col.name])).filter(Number.isFinite);
+        const outliers = values.filter((value) => col.q1 !== null && col.q3 !== null && (value < col.q1 - 1.5 * (col.q3 - col.q1) || value > col.q3 + 1.5 * (col.q3 - col.q1))).length;
+        if (outliers >= Math.max(3, rowCount * 0.05)) {
+          issues.push({ level: "low", title: formatI18n("qualityOutliers", { column: col.name }), detail: formatI18n("qualityOutliersDetail", { count: outliers }) });
+        }
+      }
+    });
+    const signatures = new Map();
+    state.rows.forEach((row) => {
+      const signature = state.columns.map((column) => String(row[column])).join("\u001f");
+      signatures.set(signature, (signatures.get(signature) || 0) + 1);
+    });
+    const duplicateRows = Array.from(signatures.values()).reduce((sum, count) => sum + Math.max(0, count - 1), 0);
+    if (duplicateRows) issues.push({ level: "low", title: I18N.t("qualityDuplicateRows"), detail: formatI18n("qualityDuplicateRowsDetail", { count: duplicateRows }) });
+    const targetLower = targets.map((target) => String(target).toLowerCase());
+    selectedFeatures().forEach((feature) => {
+      const lower = String(feature).toLowerCase();
+      if (targetLower.some((target) => lower.includes(target) || target.includes(lower))) {
+        issues.push({ level: "high", title: formatI18n("qualityLeakage", { column: feature }), detail: I18N.t("qualityLeakageDetail") });
+      }
+    });
+    return issues;
+  }
+
   function renderResults() {
     if (!state.modelBundle) {
       $("modelMetrics").innerHTML = "";
@@ -1323,6 +1408,8 @@
       $("evaluationNotice").innerHTML = "";
       $("resultSummary").innerHTML = "";
       $("resultLog").textContent = state.rows.length ? I18N.t("noModel") : I18N.t("emptyState");
+      renderInverseDesign();
+      renderFeatureImportance();
       updateResultChartSettings();
       return;
     }
@@ -1333,7 +1420,99 @@
       targetMetricCards(b) +
       metric(b.preprocessor.featureNames.length, I18N.t("encodedFeatures"));
     $("resultLog").textContent = buildResultLog(b);
+    renderInverseDesign();
+    renderFeatureImportance();
     updateResultChartSettings();
+  }
+
+  function renderFeatureImportance() {
+    const panel = $("featureImportancePanel");
+    const table = $("featureImportanceTable");
+    const canvas = $("featureImportanceCanvas");
+    if (!panel || !table || !canvas) return;
+    if (!state.modelBundle || state.modelBundle.task === "clustering") {
+      panel.hidden = true;
+      table.innerHTML = "";
+      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+    const rows = featureImportanceRows(state.modelBundle).slice(0, 40);
+    panel.hidden = !rows.length;
+    table.innerHTML = rows.length
+      ? tableHtml([I18N.t("feature"), I18N.t("importance"), I18N.t("importanceMethod")], rows.map((row) => [row.feature, Utils.formatNumber(row.importance, 6), row.method]))
+      : "";
+    if (rows.length) {
+      canvas.width = 1200;
+      canvas.height = Math.max(360, Math.min(760, 118 + Math.min(20, rows.length) * 34));
+      Charts.horizontalBar(canvas, rows.slice(0, 20), "feature", "importance", I18N.t("featureImportance"), getChartStyle());
+    } else {
+      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  function featureImportanceRows(bundle) {
+    const targetBundles = bundle.targetBundles && bundle.targetBundles.length ? bundle.targetBundles : [{ target: bundle.target, model: bundle.model }];
+    const combined = new Map();
+    targetBundles.forEach((targetBundle) => {
+      modelImportance(bundle, targetBundle).forEach((item) => {
+        const current = combined.get(item.feature) || { feature: item.feature, importance: 0, method: item.method };
+        current.importance += item.importance / targetBundles.length;
+        combined.set(item.feature, current);
+      });
+    });
+    return Array.from(combined.values()).sort((a, b) => b.importance - a.importance);
+  }
+
+  function modelImportance(bundle, targetBundle) {
+    const model = targetBundle.model;
+    if (model && model.weights) {
+      const scores = new Map();
+      bundle.preprocessor.featureNames.forEach((encoded, i) => {
+        const raw = rawFeatureFromEncoded(encoded, bundle.features);
+        scores.set(raw, (scores.get(raw) || 0) + Math.abs(model.weights[i] || 0));
+      });
+      return Array.from(scores.entries()).map(([feature, importance]) => ({ feature, importance, method: I18N.t("importanceLinear") }));
+    }
+    const splitCounts = new Map();
+    collectTreeSplits(model, splitCounts);
+    if (splitCounts.size) {
+      return Array.from(splitCounts.entries()).map(([index, importance]) => ({
+        feature: rawFeatureFromEncoded(bundle.preprocessor.featureNames[index] || bundle.features[index] || `f${index}`, bundle.features),
+        importance,
+        method: I18N.t("importanceTree")
+      }));
+    }
+    return permutationImportance(bundle, targetBundle);
+  }
+
+  function collectTreeSplits(model, counts) {
+    if (!model) return;
+    if (model.root) collectNodeSplits(model.root, counts);
+    if (Array.isArray(model.trees)) model.trees.forEach((tree) => collectTreeSplits(tree, counts));
+    if (Array.isArray(model.estimators)) model.estimators.forEach((tree) => collectTreeSplits(tree, counts));
+  }
+
+  function collectNodeSplits(node, counts) {
+    if (!node || node.value !== undefined) return;
+    counts.set(node.feature, (counts.get(node.feature) || 0) + 1);
+    collectNodeSplits(node.left, counts);
+    collectNodeSplits(node.right, counts);
+  }
+
+  function permutationImportance(bundle, targetBundle) {
+    const rows = (state.predictions.length ? state.predictions : state.rows).slice(0, 120);
+    if (!rows.length) return [];
+    const baseline = rows.map((row) => targetBundle.model.predict(TabularData.transformRow(row, bundle.preprocessor)));
+    return bundle.features.map((feature, featureIndex) => {
+      const permuted = rows.map((row, i) => ({ ...row, [feature]: rows[(i + 7 + featureIndex) % rows.length][feature] }));
+      const changed = permuted.map((row) => targetBundle.model.predict(TabularData.transformRow(row, bundle.preprocessor)));
+      const importance = Utils.mean(changed.map((value, i) => Math.abs(Number(value) - Number(baseline[i]))));
+      return { feature, importance: Number.isFinite(importance) ? importance : 0, method: I18N.t("importancePermutation") };
+    }).sort((a, b) => b.importance - a.importance);
+  }
+
+  function rawFeatureFromEncoded(encoded, features) {
+    return features.find((feature) => encoded === feature || encoded.startsWith(`${feature}=`)) || encoded;
   }
 
   function targetMetricCards(bundle) {
@@ -1668,6 +1847,322 @@
     });
   }
 
+  function renderInverseDesign() {
+    const panel = $("inverseDesignPanel");
+    const form = $("inverseTargetForm");
+    const constraints = $("inverseConstraintForm");
+    const output = $("inverseDesignOutput");
+    if (!panel || !form || !constraints || !output) return;
+    const bundle = state.modelBundle;
+    const visible = Boolean(bundle && bundle.task === "regression");
+    panel.hidden = !visible;
+    if (!visible) {
+      form.innerHTML = "";
+      constraints.innerHTML = "";
+      output.textContent = "";
+      return;
+    }
+    const existing = new Map(Array.from(form.querySelectorAll("input")).map((input) => [input.dataset.inverseTarget, input.value]));
+    form.innerHTML = "";
+    (bundle.targetBundles || [{ target: bundle.target }]).forEach((targetBundle) => {
+      const target = targetBundle.target;
+      const label = document.createElement("label");
+      const span = document.createElement("span");
+      span.textContent = target;
+      const input = document.createElement("input");
+      input.type = "number";
+      input.step = "any";
+      input.dataset.inverseTarget = target;
+      input.value = existing.has(target) ? existing.get(target) : "";
+      label.appendChild(span);
+      label.appendChild(input);
+      form.appendChild(label);
+    });
+    renderInverseConstraints(bundle, constraints);
+    if (state.inverseDesignResult) output.innerHTML = inverseReportHtml(state.inverseDesignResult);
+  }
+
+  function renderInverseConstraints(bundle, node) {
+    const existing = new Map(Array.from(node.querySelectorAll("[data-inverse-constraint]")).map((input) => [input.dataset.inverseConstraint, input.value]));
+    const spaces = buildFeatureSpaces(bundle, null);
+    node.innerHTML = spaces.map((space) => {
+      if (space.type === "numeric") {
+        const minKey = `${space.feature}::min`;
+        const maxKey = `${space.feature}::max`;
+        return `<div class="constraint-row">
+          <strong>${escapeHtml(space.feature)}</strong>
+          <label><span>${escapeHtml(I18N.t("min"))}</span><input data-inverse-constraint="${escapeHtml(minKey)}" type="number" step="any" placeholder="${escapeHtml(Utils.formatNumber(space.min, 6))}" value="${escapeHtml(existing.get(minKey) || "")}"></label>
+          <label><span>${escapeHtml(I18N.t("max"))}</span><input data-inverse-constraint="${escapeHtml(maxKey)}" type="number" step="any" placeholder="${escapeHtml(Utils.formatNumber(space.max, 6))}" value="${escapeHtml(existing.get(maxKey) || "")}"></label>
+        </div>`;
+      }
+      const key = `${space.feature}::categories`;
+      return `<div class="constraint-row">
+        <strong>${escapeHtml(space.feature)}</strong>
+        <label><span>${escapeHtml(I18N.t("allowedCategories"))}</span><input data-inverse-constraint="${escapeHtml(key)}" type="text" placeholder="${escapeHtml(space.categories.join(", "))}" value="${escapeHtml(existing.get(key) || "")}"></label>
+      </div>`;
+    }).join("");
+  }
+
+  function runInverseDesign() {
+    if (!state.modelBundle) return Utils.toast(I18N.t("noModel"));
+    if (state.modelBundle.task !== "regression") return Utils.toast(I18N.t("inverseRegressionOnly"));
+    const goals = inverseGoals();
+    if (!goals.length) return Utils.toast(I18N.t("inverseNeedTarget"));
+    const topN = Utils.clamp(Math.round(Number($("inverseTopN").value) || 1), 1, 50);
+    $("inverseTopN").value = String(topN);
+    const constraints = inverseConstraints();
+    const result = inverseSearch(state.modelBundle, goals, 30000, topN, constraints);
+    state.inverseDesignResult = result || null;
+    $("inverseDesignOutput").innerHTML = result
+      ? inverseReportHtml(result)
+      : `<div>${escapeHtml(I18N.t("inverseNoCandidate"))}</div>`;
+    Utils.toast(result ? I18N.t("inverseSearchDone") : I18N.t("inverseNoCandidate"));
+  }
+
+  function inverseGoals() {
+    return Array.from(document.querySelectorAll("[data-inverse-target]"))
+      .map((input) => ({ target: input.dataset.inverseTarget, value: Utils.toNumber(input.value) }))
+      .filter((item) => Number.isFinite(item.value));
+  }
+
+  function inverseConstraints() {
+    const constraints = {};
+    document.querySelectorAll("[data-inverse-constraint]").forEach((input) => {
+      if (Utils.isMissing(input.value)) return;
+      const [feature, kind] = input.dataset.inverseConstraint.split("::");
+      if (!constraints[feature]) constraints[feature] = {};
+      if (kind === "categories") {
+        constraints[feature].categories = input.value.split(",").map((item) => item.trim()).filter(Boolean);
+      } else {
+        const num = Utils.toNumber(input.value);
+        if (Number.isFinite(num)) constraints[feature][kind] = num;
+      }
+    });
+    return constraints;
+  }
+
+  function inverseSearch(bundle, goals, count, topN, constraints) {
+    const spaces = buildFeatureSpaces(bundle, constraints);
+    if (spaces.some((space) => space.type === "categorical" && !space.categories.length)) return null;
+    const targetBundles = (bundle.targetBundles || [{ target: bundle.target, model: bundle.model }])
+      .filter((targetBundle) => goals.some((goal) => goal.target === targetBundle.target));
+    const activeGoals = goals.filter((goal) => targetBundles.some((targetBundle) => targetBundle.target === goal.target));
+    const known = knownFeatureSignatures(bundle.features, bundle.preprocessor);
+    const best = [];
+    let evaluated = 0;
+    let skippedKnown = 0;
+    for (let i = 0; i < count; i++) {
+      const row = candidateRow(spaces, i);
+      if (known.has(featureSignature(row, bundle.features, bundle.preprocessor))) {
+        skippedKnown++;
+        continue;
+      }
+      const vector = TabularData.transformRow(row, bundle.preprocessor);
+      const predictions = {};
+      targetBundles.forEach((targetBundle) => {
+        predictions[targetBundle.target] = targetBundle.model.predict(vector);
+      });
+      const distance = Math.sqrt(activeGoals.reduce((sum, goal) => {
+        const predicted = predictions[goal.target];
+        return sum + Math.pow(predicted - goal.value, 2);
+      }, 0));
+      if (!Number.isFinite(distance)) continue;
+      evaluated++;
+      addInverseCandidate(best, { row, predictions, distance }, topN);
+    }
+    if (!best.length) return null;
+    return {
+      results: best,
+      goals: activeGoals,
+      spaces,
+      requested: count,
+      evaluated,
+      skippedKnown,
+      knownRows: known.size,
+      topN,
+      constraints: constraints || {},
+      model: bundle.model && bundle.model.type ? bundle.model.type : ((targetBundles[0] && targetBundles[0].model.type) || "")
+    };
+  }
+
+  function addInverseCandidate(best, candidate, topN) {
+    best.push(candidate);
+    best.sort((a, b) => a.distance - b.distance);
+    if (best.length > topN) best.length = topN;
+  }
+
+  function buildFeatureSpaces(bundle, constraints) {
+    return bundle.features.map((feature, index) => {
+      const constraint = (constraints && constraints[feature]) || {};
+      const info = bundle.preprocessor.byName[feature] || state.schema.find((col) => col.name === feature);
+      if (info && info.type === "numeric") {
+        const values = state.rows.map((row) => Utils.toNumber(row[feature])).filter(Number.isFinite);
+        const baseMin = values.length ? Math.min(...values) : (bundle.preprocessor.numericStats[feature] ? bundle.preprocessor.numericStats[feature].min : 0);
+        const baseMax = values.length ? Math.max(...values) : (bundle.preprocessor.numericStats[feature] ? bundle.preprocessor.numericStats[feature].max : baseMin);
+        const min = Number.isFinite(constraint.min) ? Utils.clamp(constraint.min, baseMin, baseMax) : baseMin;
+        const max = Number.isFinite(constraint.max) ? Utils.clamp(constraint.max, min, baseMax) : baseMax;
+        return { feature, type: "numeric", min, max, prime: nthPrime(index) };
+      }
+      const map = bundle.preprocessor.categoryMaps[feature];
+      const baseCategories = map ? Array.from(map.keys()) : Utils.unique(state.rows.map((row) => row[feature]).filter((value) => !Utils.isMissing(value)));
+      const categories = constraint.categories && constraint.categories.length
+        ? baseCategories.filter((category) => constraint.categories.map(String).includes(String(category)))
+        : baseCategories;
+      return { feature, type: "categorical", categories, prime: nthPrime(index) };
+    });
+  }
+
+  function candidateRow(spaces, index) {
+    const row = {};
+    spaces.forEach((space) => {
+      const value = halton(index + 1, space.prime);
+      if (space.type === "numeric") {
+        row[space.feature] = space.min + value * ((space.max - space.min) || 0);
+      } else {
+        const idx = Math.min(space.categories.length - 1, Math.floor(value * space.categories.length));
+        row[space.feature] = space.categories[idx];
+      }
+    });
+    return row;
+  }
+
+  function knownFeatureSignatures(features, preprocessor) {
+    return new Set(state.rows.map((row) => featureSignature(row, features, preprocessor)));
+  }
+
+  function featureSignature(row, features, preprocessor) {
+    return features.map((feature) => {
+      const info = preprocessor.byName[feature];
+      if (info && info.type === "numeric") {
+        let num = Utils.toNumber(row[feature]);
+        if (!Number.isFinite(num)) {
+          const stats = preprocessor.numericStats[feature] || {};
+          if (preprocessor.options.missingStrategy === "median_mode") num = stats.median || 0;
+          else if (preprocessor.options.missingStrategy === "zero_unknown") num = 0;
+          else num = stats.mean || 0;
+        }
+        return `n:${Number(num.toPrecision(12))}`;
+      }
+      const value = Utils.isMissing(row[feature])
+        ? (preprocessor.options.missingStrategy === "zero_unknown" ? "Unknown" : ((info && info.mode) || "Unknown"))
+        : String(row[feature]).trim();
+      return `c:${value}`;
+    }).join("\u001f");
+  }
+
+  function halton(index, base) {
+    let result = 0;
+    let fraction = 1 / base;
+    let i = index;
+    while (i > 0) {
+      result += fraction * (i % base);
+      i = Math.floor(i / base);
+      fraction /= base;
+    }
+    return result;
+  }
+
+  function nthPrime(index) {
+    const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113];
+    return primes[index % primes.length];
+  }
+
+  function inverseReportHtml(result) {
+    const featureRows = result.spaces.map((space) => [
+      space.feature,
+      space.type === "numeric"
+        ? `${Utils.formatNumber(space.min, 6)} - ${Utils.formatNumber(space.max, 6)}`
+        : space.categories.join(" | ")
+    ]);
+    const resultHtml = result.results.map((candidate, index) => {
+      const candidateFeatureRows = result.spaces.map((space) => [
+        space.feature,
+        candidate.row[space.feature]
+      ]);
+      const predictionRows = result.goals.map((goal) => [
+        goal.target,
+        Utils.formatNumber(goal.value, 6),
+        Utils.formatNumber(candidate.predictions[goal.target], 6),
+        Utils.formatNumber(candidate.predictions[goal.target] - goal.value, 6)
+      ]);
+      return `
+        <div class="inverse-candidate">
+          <strong>${escapeHtml(formatI18n("inverseCandidateTitle", { rank: index + 1, distance: Utils.formatNumber(candidate.distance, 6) }))}</strong>
+          <div class="table-wrap compact-table">
+            <table>${tableHtml([I18N.t("feature"), I18N.t("inverseRecommendedValue")], candidateFeatureRows)}</table>
+          </div>
+          <div class="table-wrap compact-table">
+            <table>${tableHtml([I18N.t("target"), I18N.t("inverseDesired"), I18N.t("predictedValue"), I18N.t("inverseError")], predictionRows)}</table>
+          </div>
+        </div>
+      `;
+    }).join("");
+    return `
+      <div class="inverse-report">
+        <strong>${escapeHtml(I18N.t("inverseReport"))}</strong>
+        <dl>
+          ${summaryItem(I18N.t("summaryTask"), formatI18n("inverseTaskValue", { model: result.model }))}
+          ${summaryItem(I18N.t("inverseMethod"), I18N.t("inverseMethodDetail"))}
+          ${summaryItem(I18N.t("inverseSearchSpace"), formatI18n("inverseSearchSpaceDetail", {
+            features: result.spaces.length,
+            requested: result.requested,
+            evaluated: result.evaluated,
+            skipped: result.skippedKnown,
+            known: result.knownRows,
+            topN: result.topN,
+            returned: result.results.length
+          }))}
+          ${summaryItem(I18N.t("inverseDistance"), formatI18n("inverseBestDistance", { distance: Utils.formatNumber(result.results[0].distance, 6) }))}
+        </dl>
+        <div class="table-wrap compact-table">
+          <table>${tableHtml([I18N.t("feature"), I18N.t("inverseRange")], featureRows)}</table>
+        </div>
+        ${resultHtml}
+      </div>
+    `;
+  }
+
+  function saveInverseDesign(format) {
+    if (!state.inverseDesignResult) return Utils.toast(I18N.t("inverseNoResult"));
+    const result = state.inverseDesignResult;
+    if (format === "json") {
+      Utils.downloadText("tabularlab-inverse-design.json", JSON.stringify(result, null, 2), "application/json");
+      Utils.toast(I18N.t("downloadReady"));
+      return;
+    }
+    Utils.downloadText("tabularlab-inverse-design.csv", Utils.rowsToCsv(inverseRows(result)), "text/csv;charset=utf-8");
+    Utils.toast(I18N.t("downloadReady"));
+  }
+
+  function inverseRows(result) {
+    return result.results.map((candidate, index) => {
+      const row = {
+        rank: index + 1,
+        l2_distance: candidate.distance,
+        top_n: result.topN,
+        evaluated: result.evaluated,
+        skipped_known: result.skippedKnown
+      };
+      result.spaces.forEach((space) => {
+        row[`feature_${space.feature}`] = candidate.row[space.feature];
+        row[`space_${space.feature}`] = space.type === "numeric" ? `${space.min}..${space.max}` : space.categories.join("|");
+      });
+      result.goals.forEach((goal) => {
+        row[`desired_${goal.target}`] = goal.value;
+        row[`predicted_${goal.target}`] = candidate.predictions[goal.target];
+        row[`error_${goal.target}`] = candidate.predictions[goal.target] - goal.value;
+      });
+      return row;
+    });
+  }
+
+  function formatI18n(key, values) {
+    return I18N.t(key).replace(/\{(\w+)\}/g, (_, name) => {
+      const value = values && values[name];
+      return value === undefined || value === null ? "" : String(value);
+    });
+  }
+
   function drawCurrentChart() {
     applyChartSize($("chartCanvas"));
     renderCurrentChart($("chartCanvas"));
@@ -1800,6 +2295,7 @@
       metrics: item.metrics
     }));
     Utils.downloadText("tabularlab-results.json", JSON.stringify({
+      reproducibility: reproducibilityInfo(state.modelBundle),
       task: state.modelBundle.task,
       targets: state.modelBundle.targets,
       features: state.modelBundle.features,
@@ -1815,6 +2311,174 @@
       cv: state.modelBundle.cv
     }, null, 2), "application/json");
     Utils.toast(I18N.t("downloadReady"));
+  }
+
+  function saveModel() {
+    if (!state.modelBundle) return Utils.toast(I18N.t("noModel"));
+    Utils.downloadText("tabularlab-model.json", JSON.stringify({
+      app: "TabularLab",
+      version: window.TabularLabMeta ? TabularLabMeta.version : "",
+      savedAt: new Date().toISOString(),
+      bundle: serializableBundle(state.modelBundle)
+    }, null, 2), "application/json");
+    Utils.toast(I18N.t("downloadReady"));
+  }
+
+  function serializableBundle(bundle) {
+    const copy = JSON.parse(JSON.stringify(bundle));
+    if (bundle.preprocessor && bundle.preprocessor.categoryMaps) {
+      copy.preprocessor.categoryMaps = {};
+      Object.entries(bundle.preprocessor.categoryMaps).forEach(([column, map]) => {
+        copy.preprocessor.categoryMaps[column] = Array.from(map.entries());
+      });
+    }
+    return copy;
+  }
+
+  function loadModelFile(event) {
+    const file = event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        const bundle = parsed.bundle || parsed;
+        reviveBundle(bundle);
+        state.modelBundle = bundle;
+        state.targetBundles = bundle.targetBundles || [];
+        state.predictions = [];
+        state.inverseDesignResult = null;
+        renderResults();
+        renderPredictionForm();
+        renderBatchRequirements();
+        populateResultTargets();
+        drawResultChart();
+        activateTab("results");
+        updateStatusBar();
+        Utils.toast(I18N.t("modelLoaded"));
+      } catch (error) {
+        Utils.toast(`${I18N.t("modelLoadFailed")}: ${error.message}`);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function reviveBundle(bundle) {
+    if (bundle.preprocessor && bundle.preprocessor.categoryMaps) {
+      Object.entries(bundle.preprocessor.categoryMaps).forEach(([column, value]) => {
+        bundle.preprocessor.categoryMaps[column] = value instanceof Map ? value : new Map(value);
+      });
+    }
+    (bundle.targetBundles || []).forEach((targetBundle) => {
+      targetBundle.model = reviveModel(targetBundle.model);
+    });
+    bundle.model = reviveModel(bundle.model || (bundle.targetBundles && bundle.targetBundles[0] && bundle.targetBundles[0].model));
+  }
+
+  function reviveModel(model) {
+    if (!model || model.predict) return model;
+    if (model.root) {
+      model.predict = function (row) {
+        let node = this.root;
+        while (node.value === undefined) node = row[node.feature] <= node.threshold ? node.left : node.right;
+        return node.value;
+      };
+    }
+    if (Array.isArray(model.trees)) {
+      model.trees = model.trees.map(reviveModel);
+      model.predict = function (row) {
+        const votes = this.trees.map((tree) => tree.predict(row));
+        return this.task === "regression" ? Utils.mean(votes) : majorityValue(votes);
+      };
+    }
+    if (Array.isArray(model.estimators)) {
+      model.estimators = model.estimators.map(reviveModel);
+      model.predict = function (row) {
+        return this.estimators.reduce((value, tree) => value + this.lr * tree.predict(row), this.bias);
+      };
+    }
+    if (model.weights) model.predict = function (row) { return row.reduce((sum, value, i) => sum + value * this.weights[i], this.bias || 0); };
+    if (model.type === "knn_regressor" || model.type === "knn_classifier") {
+      model.predict = function (row) {
+        const neighbors = this.X.map((x, index) => ({ d: Math.sqrt(x.reduce((sum, value, i) => sum + Math.pow(value - row[i], 2), 0)), y: this.y[index] }))
+          .sort((a, b) => a.d - b.d)
+          .slice(0, this.k);
+        return this.task === "regression" ? Utils.mean(neighbors.map((item) => item.y)) : majorityValue(neighbors.map((item) => item.y));
+      };
+    }
+    if (model.type === "softmax_classifier") {
+      model.predictProba = function (row) {
+        const scores = this.W.map((w, c) => w.reduce((sum, value, i) => sum + value * row[i], this.b[c]));
+        const max = Math.max(...scores);
+        const exps = scores.map((score) => Math.exp(score - max));
+        const total = exps.reduce((a, b) => a + b, 0) || 1;
+        return exps.map((value) => value / total);
+      };
+      model.predict = function (row) {
+        const probs = this.predictProba(row);
+        return probs.indexOf(Math.max(...probs));
+      };
+    }
+    if (model.type === "gaussian_naive_bayes") {
+      model.predict = function (row) {
+        return this.stats.map((item) => {
+          let score = Math.log(item.prior || 1e-9);
+          row.forEach((value, j) => {
+            const variance = item.variance[j] || 1e-9;
+            score += -0.5 * Math.log(2 * Math.PI * variance) - Math.pow(value - item.mean[j], 2) / (2 * variance);
+          });
+          return { klass: item.klass, score };
+        }).sort((a, b) => b.score - a.score)[0].klass;
+      };
+    }
+    if (model.type === "linear_svm_classifier") {
+      model.predict = function (row) {
+        const scores = this.W.map((w, c) => w.reduce((sum, value, i) => sum + value * row[i], this.b[c]));
+        return this.classes[scores.indexOf(Math.max(...scores))];
+      };
+    }
+    if (model.type === "kmeans" || model.type === "agglomerative") {
+      model.predict = function (row) {
+        const distances = this.centroids.map((center) => Math.sqrt(center.reduce((sum, value, i) => sum + Math.pow(value - row[i], 2), 0)));
+        return distances.indexOf(Math.min(...distances));
+      };
+    }
+    if (model.type === "dbscan") {
+      model.predict = function (row) {
+        const nearest = this.X.map((x, i) => ({ i, d: Math.sqrt(x.reduce((sum, value, j) => sum + Math.pow(value - row[j], 2), 0)) })).sort((a, b) => a.d - b.d)[0];
+        return nearest ? this.assignments[nearest.i] : -1;
+      };
+    }
+    return model;
+  }
+
+  function majorityValue(values) {
+    const counts = new Map();
+    values.forEach((value) => counts.set(value, (counts.get(value) || 0) + 1));
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0][0];
+  }
+
+  function saveHtmlReport() {
+    if (!state.modelBundle) return Utils.toast(I18N.t("noModel"));
+    Utils.downloadText("tabularlab-report.html", buildHtmlReport(), "text/html;charset=utf-8");
+    Utils.toast(I18N.t("downloadReady"));
+  }
+
+  function buildHtmlReport() {
+    const bundle = state.modelBundle;
+    const importance = featureImportanceRows(bundle).slice(0, 30).map((row) => [row.feature, Utils.formatNumber(row.importance, 6), row.method]);
+    return `<!doctype html><html><head><meta charset="utf-8"><title>TabularLab Report</title><style>
+      body{font-family:Arial,sans-serif;line-height:1.5;color:#1d2530;margin:32px}
+      h1,h2{margin:0 0 12px} section{margin:24px 0} table{border-collapse:collapse;width:100%;margin:10px 0} th,td{border:1px solid #d2dbe5;padding:6px;text-align:left;vertical-align:top} th{background:#eef3f7} pre{white-space:pre-wrap;background:#f6f8fa;padding:12px}
+    </style></head><body>
+      <h1>TabularLab ${escapeHtml(I18N.t("summaryReport"))}</h1>
+      <section><h2>${escapeHtml(I18N.t("summaryReport"))}</h2>${buildSummaryReport(bundle)}</section>
+      <section><h2>${escapeHtml(I18N.t("reproducibility"))}</h2><pre>${escapeHtml(JSON.stringify(reproducibilityInfo(bundle), null, 2))}</pre></section>
+      <section><h2>${escapeHtml(I18N.t("featureImportance"))}</h2><table>${tableHtml([I18N.t("feature"), I18N.t("importance"), I18N.t("importanceMethod")], importance)}</table></section>
+      ${state.inverseDesignResult ? `<section><h2>${escapeHtml(I18N.t("inverseReport"))}</h2>${inverseReportHtml(state.inverseDesignResult)}</section>` : ""}
+      <section><h2>${escapeHtml(I18N.t("modelOutput"))}</h2><pre>${escapeHtml(buildResultLog(bundle))}</pre></section>
+    </body></html>`;
   }
 
   function savePredictions() {
@@ -1883,6 +2547,9 @@
     if (bundle.opts.tuning) {
       lines.push(`Auto tuning: ${bundle.opts.tuning.method}; candidates=${bundle.opts.tuning.candidates}; score=${Utils.formatNumber(bundle.opts.tuning.score, 6)}`);
     }
+    lines.push("");
+    lines.push(I18N.t("reproducibility"));
+    lines.push(JSON.stringify(reproducibilityInfo(bundle), null, 2));
     if (bundle.splitInfo && bundle.evaluationMode === "cross_validation_oof") {
       const firstTarget = (bundle.targets || [bundle.target])[0];
       const cvPack = bundle.cv && bundle.cv[firstTarget];
@@ -1942,6 +2609,31 @@
       lines.push(JSON.stringify(state.predictions.slice(0, 8), null, 2));
     }
     return lines.join("\n");
+  }
+
+  function reproducibilityInfo(bundle) {
+    return {
+      software: window.TabularLabMeta ? TabularLabMeta.title : "TabularLab",
+      version: window.TabularLabMeta ? TabularLabMeta.version : "",
+      releaseDate: window.TabularLabMeta ? TabularLabMeta.released : "",
+      generatedAt: new Date().toISOString(),
+      dataset: state.filename || "",
+      rows: state.rows.length,
+      columns: state.columns.length,
+      task: bundle.task,
+      targets: bundle.targets || [bundle.target],
+      features: bundle.features,
+      encodedFeatures: bundle.preprocessor ? bundle.preprocessor.featureNames : [],
+      missingStrategy: bundle.opts ? bundle.opts.missingStrategy : "",
+      encodingStrategy: bundle.opts ? bundle.opts.encodingStrategy : "",
+      model: bundle.model && bundle.model.type ? bundle.model.type : "",
+      modelParams: bundle.opts ? bundle.opts.modelParams : {},
+      seed: bundle.opts ? bundle.opts.seed : null,
+      testSize: bundle.opts ? bundle.opts.testSize : null,
+      evaluationMode: bundle.evaluationMode,
+      splitInfo: bundle.splitInfo,
+      autoTuning: bundle.opts && bundle.opts.tuning ? bundle.opts.tuning : null
+    };
   }
 
   function flatMetrics(metrics) {

@@ -38,6 +38,8 @@
     const style = styleOptions(options);
     ctx.__style = style;
     canvas.__ctx = ctx;
+    canvas.__chartHits = [];
+    if (!canvas.__svg) setupTooltip(canvas);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = style.background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -101,6 +103,93 @@
     return { min: Math.min(...nums), max: Math.max(...nums), values: nums };
   }
 
+  function addHit(canvas, hit) {
+    if (canvas.__svg) return;
+    if (!Array.isArray(canvas.__chartHits)) canvas.__chartHits = [];
+    canvas.__chartHits.push(hit);
+  }
+
+  function setupTooltip(canvas) {
+    if (canvas.__chartTooltipReady) return;
+    canvas.__chartTooltipReady = true;
+    canvas.addEventListener("mousemove", (event) => {
+      const hit = findHit(canvas, event);
+      canvas.style.cursor = hit ? "pointer" : "";
+      if (!canvas.__chartTooltipLocked) showTooltip(canvas, hit, event);
+    });
+    canvas.addEventListener("click", (event) => {
+      const hit = findHit(canvas, event);
+      canvas.__chartTooltipLocked = Boolean(hit);
+      showTooltip(canvas, hit, event);
+    });
+    canvas.addEventListener("mouseleave", () => {
+      canvas.style.cursor = "";
+      if (!canvas.__chartTooltipLocked) hideTooltip();
+    });
+  }
+
+  function findHit(canvas, event) {
+    const hits = canvas.__chartHits || [];
+    if (!hits.length) return null;
+    const rect = canvas.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * canvas.width;
+    const y = ((event.clientY - rect.top) / rect.height) * canvas.height;
+    let best = null;
+    hits.forEach((hit) => {
+      let distance = Infinity;
+      if (hit.kind === "point") {
+        const dx = x - hit.x;
+        const dy = y - hit.y;
+        distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > Math.max(9, (hit.r || 5) + 5)) return;
+      } else if (hit.kind === "rect") {
+        if (x < hit.x || x > hit.x + hit.w || y < hit.y || y > hit.y + hit.h) return;
+        const cx = hit.x + hit.w / 2;
+        const cy = hit.y + hit.h / 2;
+        distance = Math.abs(x - cx) + Math.abs(y - cy);
+      }
+      if (!best || distance < best.distance) best = { hit, distance };
+    });
+    return best && best.hit;
+  }
+
+  function showTooltip(canvas, hit, event) {
+    const tooltip = chartTooltip();
+    if (!hit) {
+      hideTooltip();
+      return;
+    }
+    tooltip.innerHTML = hit.lines.map((line) => `<div>${escapeXml(line)}</div>`).join("");
+    tooltip.classList.add("visible");
+    const offset = 14;
+    const maxLeft = window.innerWidth - tooltip.offsetWidth - 10;
+    const maxTop = window.innerHeight - tooltip.offsetHeight - 10;
+    tooltip.style.left = `${Math.max(10, Math.min(maxLeft, event.clientX + offset))}px`;
+    tooltip.style.top = `${Math.max(10, Math.min(maxTop, event.clientY + offset))}px`;
+    canvas.__chartTooltipLocked = canvas.__chartTooltipLocked && document.body.contains(tooltip);
+  }
+
+  function hideTooltip() {
+    const tooltip = document.querySelector(".chart-tooltip");
+    if (tooltip) tooltip.classList.remove("visible");
+  }
+
+  function chartTooltip() {
+    let tooltip = document.querySelector(".chart-tooltip");
+    if (!tooltip) {
+      tooltip = document.createElement("div");
+      tooltip.className = "chart-tooltip";
+      document.body.appendChild(tooltip);
+    }
+    return tooltip;
+  }
+
+  function valueLine(label, value) {
+    const num = Utils.toNumber(value);
+    const display = Number.isFinite(num) ? Utils.formatNumber(num, 4) : String(value);
+    return `${label}: ${display}`;
+  }
+
   function histogram(canvas, rows, column, options) {
     const ctx = setup(canvas, options);
     const style = ctx.__style;
@@ -122,8 +211,22 @@
     const barW = plotW / bins;
     counts.forEach((count, i) => {
       const barH = (count / maxCount) * plotH;
+      const barX = 84 + i * barW;
+      const barY = h - 70 - barH;
+      const barWidth = Math.max(2, barW - 4);
       ctx.fillStyle = palette(i, style);
-      ctx.fillRect(84 + i * barW, h - 70 - barH, Math.max(2, barW - 4), barH);
+      ctx.fillRect(barX, barY, barWidth, barH);
+      addHit(canvas, {
+        kind: "rect",
+        x: barX,
+        y: barY,
+        w: barWidth,
+        h: barH,
+        lines: [
+          `区间: ${Utils.formatNumber(ex.min + (span * i) / bins, 4)} - ${Utils.formatNumber(ex.min + (span * (i + 1)) / bins, 4)}`,
+          `数量: ${count}`
+        ]
+      });
     });
     drawTicks(ctx, ex.min, ex.max, 82, h - 70, w - 36, h - 70, false);
     drawTicks(ctx, 0, maxCount, 82, h - 70, 82, 56, true);
@@ -215,6 +318,9 @@
       ctx.strokeStyle = style.pointStroke;
       ctx.lineWidth = 1.5;
       ctx.stroke();
+      const lines = [valueLine(xColumn, xv), valueLine(yColumn, yv)];
+      if (colorColumn) lines.push(`${colorColumn}: ${String(row[colorColumn])}`);
+      addHit(canvas, { kind: "point", x: px, y: py, r: style.pointSize, lines });
     });
     ctx.globalAlpha = 1;
     drawTicks(ctx, x.min, x.max, 82, h - 70, w - 36, h - 70, false);
@@ -283,8 +389,19 @@
       labels.forEach((label, j) => {
         const count = groups.get(key).get(String(label)) || 0;
         const height = (count / maxCount) * (h - 132);
+        const barX = 84 + i * band;
+        const barY = yBase - height;
+        const barWidth = Math.max(4, band - 6);
         ctx.fillStyle = palette(j, style);
-        ctx.fillRect(84 + i * band, yBase - height, Math.max(4, band - 6), height);
+        ctx.fillRect(barX, barY, barWidth, height);
+        addHit(canvas, {
+          kind: "rect",
+          x: barX,
+          y: barY,
+          w: barWidth,
+          h: height,
+          lines: [`${xColumn}: ${key}`, `${targetColumn}: ${String(label)}`, `数量: ${count}`]
+        });
         yBase -= height;
       });
       ctx.fillStyle = style.textColor;
@@ -363,6 +480,13 @@
       ctx.strokeStyle = style.pointStroke;
       ctx.lineWidth = 1.7;
       ctx.stroke();
+      addHit(canvas, {
+        kind: "point",
+        x: px,
+        y: py,
+        r: style.pointSize + 1,
+        lines: [valueLine("Actual", actualRaw[i]), valueLine("Predicted", predictedRaw[i])]
+      });
     });
     ctx.globalAlpha = 1;
     drawTicks(ctx, min, max, left, bottom, right, bottom, false);
@@ -440,10 +564,72 @@
       ctx.strokeStyle = style.pointStroke;
       ctx.lineWidth = 2;
       ctx.stroke();
+      addHit(canvas, {
+        kind: "point",
+        x: px,
+        y: py,
+        r: style.pointSize + 3,
+        lines: [valueLine(xColumn, xv), valueLine(yColumn, yv), `${clusterColumn}: ${String(row[clusterColumn])}`]
+      });
     });
     ctx.globalAlpha = 1;
     drawTicks(ctx, x.min, x.max, 82, h - 70, w - 36, h - 70, false);
     drawTicks(ctx, y.min, y.max, 82, h - 70, 82, 56, true);
+  }
+
+  function horizontalBar(canvas, rows, labelKey, valueKey, title, options) {
+    const ctx = setup(canvas, options);
+    const style = ctx.__style;
+    const w = canvas.width;
+    const h = canvas.height;
+    const items = rows
+      .map((row) => ({ label: String(row[labelKey]), value: Utils.toNumber(row[valueKey]) }))
+      .filter((row) => Number.isFinite(row.value))
+      .slice(0, 20);
+    if (!items.length) return;
+    const left = 240;
+    const right = w - 72;
+    const top = 70;
+    const rowH = Math.max(22, Math.min(38, (h - 118) / items.length));
+    const barH = Math.max(12, rowH * 0.58);
+    const max = Math.max(...items.map((item) => Math.abs(item.value))) || 1;
+    ctx.fillStyle = style.textColor;
+    ctx.font = font(700, style.titleSize, style);
+    ctx.fillText(title || "Feature Importance", 44, 38);
+    ctx.strokeStyle = style.gridColor;
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const x = left + ((right - left) * i) / 4;
+      ctx.beginPath();
+      ctx.moveTo(x, top - 8);
+      ctx.lineTo(x, top + rowH * items.length);
+      ctx.stroke();
+    }
+    items.forEach((item, i) => {
+      const y = top + i * rowH;
+      const width = (Math.abs(item.value) / max) * (right - left);
+      ctx.fillStyle = style.textColor;
+      ctx.font = font(600, style.valueSize, style);
+      ctx.textAlign = "right";
+      ctx.fillText(item.label.slice(0, 28), left - 12, y + barH);
+      ctx.textAlign = "left";
+      ctx.fillStyle = palette(i, style);
+      ctx.globalAlpha = 0.82;
+      ctx.fillRect(left, y + 4, Math.max(2, width), barH);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = style.textColor;
+      ctx.font = font(600, Math.max(11, style.valueSize - 1), style);
+      ctx.fillText(Utils.formatNumber(item.value, 6), left + width + 8, y + barH);
+      addHit(canvas, {
+        kind: "rect",
+        x: left,
+        y: y + 4,
+        w: Math.max(2, width),
+        h: barH,
+        lines: [String(item.label), `${valueKey}: ${Utils.formatNumber(item.value, 6)}`]
+      });
+    });
+    ctx.textAlign = "left";
   }
 
 
@@ -692,6 +878,7 @@
     predictionScatter,
     confusionMatrix,
     clusterScatter,
+    horizontalBar,
     saveCanvas,
     saveSvg,
     styleOptions

@@ -171,6 +171,11 @@
 
         <section id="overview" class="tab-panel active">
           <div class="metrics" id="datasetMetrics"></div>
+          <div class="panel wide" id="dataQualityPanel">
+            <h2 data-i18n="dataQuality">数据质量检查</h2>
+            <p class="panel-note" data-i18n="dataQualityHelp">自动检查缺失值、常数列、疑似 ID、重复行、异常值和潜在目标泄露风险。</p>
+            <div id="dataQualityOutput" class="quality-list"></div>
+          </div>
           <div class="panel wide">
             <h2 data-i18n="columnSummary">字段摘要</h2>
             <p class="panel-note" data-i18n="columnSummaryHelp">查看每列的数据类型、缺失、分布和样本值，用于判断哪些字段适合建模。</p>
@@ -320,9 +325,45 @@
               <div class="row tight">
                 <button id="saveResultsBtn" class="secondary" data-i18n="saveResults">保存结果</button>
                 <button id="savePredictionsBtn" class="secondary" data-i18n="savePredictions">保存预测</button>
+                <button id="saveModelBtn" class="secondary" data-i18n="saveModel">保存模型</button>
+                <button id="loadModelBtn" class="secondary" data-i18n="loadModel">加载模型</button>
+                <button id="saveReportBtn" class="secondary" data-i18n="saveHtmlReport">保存报告</button>
               </div>
             </div>
+            <input id="modelFileInput" type="file" accept=".json" hidden>
             <pre id="resultLog" class="log"></pre>
+          </div>
+          <div class="panel wide" id="featureImportancePanel" hidden>
+            <h2 data-i18n="featureImportance">特征重要性</h2>
+            <p class="panel-note" data-i18n="featureImportanceHelp">查看模型认为更重要的输入特征。线性模型使用系数，树模型使用分裂次数，其他模型使用置换重要性近似。</p>
+            <div class="chart-shell importance-chart-shell">
+              <canvas id="featureImportanceCanvas" width="1200" height="560"></canvas>
+            </div>
+            <div class="table-wrap compact-table">
+              <table id="featureImportanceTable"></table>
+            </div>
+          </div>
+          <div class="panel wide" id="inverseDesignPanel" hidden>
+            <div class="panel-head">
+              <h2 data-i18n="inverseDesign">逆向设计</h2>
+              <div class="row tight">
+                <button id="runInverseDesignBtn" class="secondary" data-i18n="runInverseDesign">逆向搜索</button>
+                <button id="saveInverseCsvBtn" class="secondary" data-i18n="saveInverseCsv">导出 CSV</button>
+                <button id="saveInverseJsonBtn" class="secondary" data-i18n="saveInverseJson">导出 JSON</button>
+              </div>
+            </div>
+            <p class="panel-note" data-i18n="inverseDesignHelp">输入期望目标性能，在训练特征空间内搜索最接近的候选特征组合。仅回归任务可用。</p>
+            <div id="inverseTargetForm" class="prediction-grid"></div>
+            <div class="inverse-options">
+              <label>
+                <span data-i18n="inverseTopN">推荐数量 Top N</span>
+                <input id="inverseTopN" type="number" min="1" max="50" step="1" value="1">
+              </label>
+            </div>
+            <h3 class="subhead" data-i18n="inverseConstraints">搜索约束</h3>
+            <p class="panel-note" data-i18n="inverseConstraintsHelp">可选。数值特征可缩小最小/最大范围；类别特征可选择允许类别。不填则使用上传数据中的完整特征空间。</p>
+            <div id="inverseConstraintForm" class="constraint-grid"></div>
+            <div id="inverseDesignOutput" class="prediction-output"></div>
           </div>
           <div class="panel wide">
             <div class="panel-head">
